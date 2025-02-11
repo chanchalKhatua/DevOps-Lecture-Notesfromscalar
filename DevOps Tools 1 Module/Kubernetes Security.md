@@ -61,55 +61,12 @@ spec:
 
 ---
 
-## **2. Headless Services**
 
 
-### **2.1 What are Headless Services?**
-Headless Services allow direct DNS-based access to individual pods without a cluster IP. Unlike traditional services that abstract pod IPs behind a single cluster IP, Headless Services create DNS records for each pod, enabling direct communication.
-
-### **2.2 Configuration:**
-To configure a Headless Service, set `ClusterIP: None` in the service definition.
-
-Example YAML:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-headless-service
-spec:
-  clusterIP: None
-  selector:
-    app: my-app
-  ports:
-  - protocol: TCP
-    port: 80
-```
-![image](https://hackmd.io/_uploads/BkB5_y181x.png)
+## **2. Kubernetes Security and RBAC**
 
 
-### **2.3 DNS Format:**
-Pods in a Headless Service can be accessed using the following DNS format:
-```
-<podname>.<headless-service-name>.<namespace>.svc.cluster.local
-```
-For example:
-```
-pod-0.my-headless-service.default.svc.cluster.local
-```
-
-### **2.4 Use Case:**
-Headless Services are ideal for stateful applications requiring stable DNS names for each pod, such as:
-- Databases (e.g., Cassandra, MongoDB)
-- Applications requiring direct pod-to-pod communication
-
-![image](https://hackmd.io/_uploads/B1ubtk1Uyg.png)
-
----
-
-## **3. Kubernetes Security and RBAC**
-
-
-### **3.1 Authentication:**
+### **2.1 Authentication:**
 Authentication verifies the identity of users and components interacting with the Kubernetes API server.
 
 **Methods:**
@@ -118,7 +75,7 @@ Authentication verifies the identity of users and components interacting with th
 - External Identity Providers (e.g., AWS, GCP, Azure)
 - OpenID Connect (OIDC)
 
-### **3.2 Authorization:**
+### **2.2 Authorization:**
 Authorization determines what actions an authenticated user can perform.
 
 **Mechanisms:**
@@ -126,7 +83,7 @@ Authorization determines what actions an authenticated user can perform.
   - Namespace-Level: Roles and RoleBindings
   - Cluster-Level: ClusterRoles and ClusterRoleBindings
 
-### **3.3 RBAC Key Concepts:**
+### **2.3 RBAC Key Concepts:**
 | Concept          | Description                                             |
 |------------------|---------------------------------------------------------|
 | **Role**         | Grants access to resources within a namespace           |
@@ -134,7 +91,7 @@ Authorization determines what actions an authenticated user can perform.
 | **RoleBinding**  | Binds a Role to users, groups, or service accounts      |
 | **ClusterRoleBinding** | Binds a ClusterRole to users, groups, or service accounts cluster-wide |
 
-### **3.4 RBAC Syntax Examples:**
+### **2.4 RBAC Syntax Examples:**
 **Role Example:**
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -165,17 +122,17 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### **3.5 Best Practices:**
+### **2.5 Best Practices:**
 - Follow the principle of least privilege to minimize risks.
 - Regularly review and audit RBAC policies.
 - Use namespace isolation to restrict access boundaries.
 
 ---
 
-## **4. Summary Commands**
+## **3. Summary Commands**
 
 
-### **4.1 Authentication and Authorization Commands:**
+### **3.1 Authentication and Authorization Commands:**
 - `kubectl get pods` - List all pods in a namespace.
 - `kubectl delete pods <pod-name>` - Delete a specific pod.
 - `kubectl describe roles` - Describe defined RBAC roles within a namespace.
