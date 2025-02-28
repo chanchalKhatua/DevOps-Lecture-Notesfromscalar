@@ -1,3 +1,6 @@
+
+
+
 ### 1. Question 1  
 #### Why does Jenkins use `/tmp/44444464464644.sh`?  
 **Answer:**  
@@ -15,3 +18,6 @@ Jenkins often creates temporary shell scripts in the `/tmp` directory when execu
    - When you define a shell script or command in a Jenkins job, Jenkins generates a temporary script file (e.g., `/tmp/44444464464644.sh`).  
    - It executes the script and then deletes it to keep the system clean.  
 
+## Info
+#### **export NO_CLEANUP=true**
+  if we setting this jenkins not delete file
