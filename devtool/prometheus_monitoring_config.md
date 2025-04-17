@@ -12,30 +12,46 @@
 ---
 
 ## 1. Introduction to Prometheus
+## Introduction to Prometheus
 
-Prometheus is an **open-source monitoring and alerting system** designed for **reliability, scalability, and flexibility**, especially in **cloud-native** and **containerized** environments like Kubernetes.
+### Challenges with 100 Microservices in Kubernetes
+
+- Too many metrics  
+- Data overload  
+- No central view  
+- Tool fragmentation  
+- Manual monitoring  
+
+Prometheus is an **open-source monitoring and alerting system** designed for **reliability, scalability, and flexibility**—especially in **cloud-native** and **containerized** environments like Kubernetes.
+
+---
 
 ### Prometheus is used to:
 
 - Monitor **microservices** (Kubernetes, Docker)
 - Track **infrastructure metrics** (CPU, RAM, Disk)
-- Alert on service anomalies (e.g., latency > X ms)
+- Alert when services misbehave (e.g., latency > X ms)
 - Analyze long-term trends
 
-### Desired Features in Monitoring Tools:
+---
+
+### What we want in a monitoring tool:
 
 - Centralized data  
 - Easy queries  
 - Automation  
 - Alerts  
 - Metrics stored in TSDB  
-- Query, visualize, alert  
+- Query, visualize, and alert
+
+---
 
 ### Integrates with:
 
 - **Grafana** – Dashboards  
 - **Alertmanager** – Notifications  
 - **Node Exporter**, **cAdvisor**, **Kube-State-Metrics**, etc.
+
 
 ---
 
