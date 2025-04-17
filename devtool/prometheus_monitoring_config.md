@@ -12,7 +12,7 @@
 ---
 
 ## 1. Introduction to Prometheus
-## Introduction to Prometheus
+
 
 ### Challenges with 100 Microservices in Kubernetes
 
