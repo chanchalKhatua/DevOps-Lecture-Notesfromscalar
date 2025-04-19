@@ -75,7 +75,7 @@ Prometheus is an **open-source monitoring and alerting system** designed for **r
 ---
 
 ### ✅ 1. **Prometheus Server**
-**Retrieval**: Responsible for pulling metrics from configured targets (like Node Exporter, application endpoints, or
+- **Retrieval**: Responsible for pulling metrics from configured targets (like Node Exporter, application endpoints, or
 Pushgateway).
 - **TSDB (Time Series Database)**: Stores the metrics as time-stamped series data. Each metric is identified by a name
 and label set.
