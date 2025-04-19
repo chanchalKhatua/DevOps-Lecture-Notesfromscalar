@@ -348,6 +348,8 @@ Prometheus integrates well with **dashboard tools** and supports **APIs** for qu
 
 ## 🔁 Prometheus Metrics Flow – Step-by-Step
 
+![image](https://github.com/user-attachments/assets/c59286f3-a683-4ae8-825d-d71a92f92935)
+
 1. **Retrieval**:
    - Prometheus pulls metrics from `/metrics` endpoints.
 
@@ -368,9 +370,6 @@ Prometheus integrates well with **dashboard tools** and supports **APIs** for qu
    - PushGateway accepts pushed metrics from batch jobs.
 
 ---
-
-Would you like a **diagram** of this architecture or an example **project setup file** (like `prometheus.yml` + Node Exporter config)?
-
 
 ---
 
