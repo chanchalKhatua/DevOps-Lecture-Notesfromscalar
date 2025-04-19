@@ -92,7 +92,7 @@ Alertmanager
 ---
 
 ### ✅ 2. **TSDB (Time Series Database)**
-A specialized database inside Prometheus optimized for **time-stamped data**.
+A **Time Series Database** is a **specialized database designed to store and manage data that changes over time** called **time series data**.
 
 📝 **Key Concepts:**
 - Each data point has:
@@ -103,14 +103,17 @@ A specialized database inside Prometheus optimized for **time-stamped data**.
   
 📌 **Features of TSDB:**
 - Stores billions of data points efficiently.
-- Indexes time-series data by metric and label combinations.
-- Supports **fast querying** over time ranges:
-  > Example: “What was the memory usage between 10:00–11:00?”
+- Indexes time-series data by metric and label combinations. Stores data points indexed by time
+- Performing fast queries over time ranges
+    - "What was the CPU usage between 10:00 and 10:30?"
+    - "Show average memory usage over the last 24 hours"
+    - "Find spikes in disk I/O during the last week"
+- Compressing repetitive time-stamped data efficiently
 - Supports **aggregation**:
-  > E.g., Average CPU usage per 5 minutes
+     > E.g., Average CPU usage per 5 minutes
 - Supports **downsampling**:
-  > Keep fewer data points over time for long-term storage  
-  → e.g., keep 1 value every 10 minutes after 24 hours.
+      > Keep fewer data points over time for long-term storage  
+      → e.g., keep 1 value every 10 minutes after 24 hours.
 
 📊 **Example Data Points:**
 ```
