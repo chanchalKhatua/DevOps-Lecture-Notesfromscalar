@@ -127,33 +127,128 @@ Time     | Value
 ---
 
 ### ✅ 3. **Prometheus Targets**
-A **target** is any service or endpoint that exposes metrics in a Prometheus-compatible format.
+---
+### 🔷 What is a Target in Prometheus?
 
-📝 **How It Works:**
-- Prometheus is configured with `scrape_configs` in `prometheus.yml`.
-- Each target is associated with a **job name**.
-- It sends HTTP GET requests to:  
-  `http://<target-ip>:<port>/metrics`
+- A **target** is any **endpoint (usually an HTTP URL)** that **exposes metrics** in a format that **Prometheus can scrape**.
+- Targets can be:
+  - An application (e.g., web server)
+  - A service (e.g., database, queue)
+  - A system exporter (e.g., Node Exporter)
+  - Pushgateway (for batch jobs)
 
-📘 **Example Config:**
+---
+
+### 🔷 Target Configuration: `scrape_configs`
+
+In the `prometheus.yml` file, targets are defined using `scrape_configs`.
+
+📄 Example:
 ```yaml
 scrape_configs:
-  - job_name: 'node'
+  - job_name: 'myapp'
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ['localhost:9090', '192.168.1.10:8080']
 ```
 
-📌 **Target Discovery:**
-- **Static Configuration** – Hardcoded in config file.
-- **Dynamic Service Discovery** – Integrates with Kubernetes, EC2, Consul, etc.
+#### 🔹 Explanation:
 
-🔖 **Metadata Labels**:
-- Prometheus attaches metadata like:
-  - `instance`
-  - `job`
-  - `environment`
-  - `region`, etc.
+- `job_name`: Logical name for the group of targets.
+- `targets`: List of endpoints that expose metrics.
 
+Each target gets two built-in labels:
+- `__address__`: The actual endpoint (IP:PORT or hostname:PORT).
+- `job`: The job name defined above.
+
+---
+
+### 🔷 How Prometheus Discovers Targets
+
+Prometheus supports two methods to find targets:
+
+#### ✅ 1. **Static Configuration**
+- You manually define the targets in `prometheus.yml`.
+- Suitable for small or static environments (dev, test).
+
+#### ✅ 2. **Dynamic Service Discovery**
+- Automatically discovers targets in **cloud or orchestrated environments**:
+  - Kubernetes
+  - EC2
+  - Consul
+  - Docker Swarm
+- Targets come and go dynamically, and Prometheus updates the scrape list automatically.
+
+📦 Example:
+```yaml
+- job_name: 'kubernetes-nodes'
+  kubernetes_sd_configs:
+    - role: node
+```
+
+---
+
+### 🔷 Target Metadata and Labels
+
+Prometheus can attach **metadata** to targets:
+
+- **Static Labels**: Defined in config:
+  ```yaml
+  labels:
+    env: prod
+    instance: server1
+  ```
+
+- **Discovered Labels**: Like `__meta_kubernetes_pod_name`, etc. in dynamic SD.
+
+These labels help filter, group, and query metrics using **PromQL**.
+
+---
+
+### 🔷 What Happens During a Scrape?
+
+For **each target**, Prometheus follows this process:
+
+1. **Send HTTP GET** request to:
+   ```
+   http://<target>:<port>/metrics
+   ```
+
+2. **Target responds** with **plain-text** metrics in Prometheus exposition format.
+
+🧾 Example Response:
+```
+# HELP node_cpu_seconds_total Total CPU seconds.
+# TYPE node_cpu_seconds_total counter
+node_cpu_seconds_total{cpu="0",mode="user"} 1532.3
+node_memory_MemAvailable_bytes 4385673216
+```
+
+3. Prometheus:
+   - Parses this text
+   - Applies configured labels
+   - Stores the data in the **TSDB** with timestamp
+
+---
+
+### 🔷 Example Scenario – Node Exporter
+
+If you install Node Exporter on a VM:
+
+1. It runs on `http://<vm-ip>:9100/metrics`.
+2. You configure Prometheus to scrape it:
+   ```yaml
+   scrape_configs:
+     - job_name: 'node'
+       static_configs:
+         - targets: ['192.168.1.20:9100']
+   ```
+
+3. Metrics scraped:
+   - `node_cpu_seconds_total`
+   - `node_memory_MemAvailable_bytes`
+   - etc.
+
+---
 ---
 
 ### ✅ 4. **Prometheus Exporters**
