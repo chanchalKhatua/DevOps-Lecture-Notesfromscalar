@@ -289,9 +289,10 @@ Used when you can’t scrape metrics (e.g., for **short-lived jobs**).
 - The Push Gateway **stores the metrics temporarily**, so Prometheus can scrape them.
 
 📌 **Use Case Examples:**
-- CI/CD pipelines
-- Cron jobs
-- Backup scripts
+---
+![image](https://github.com/user-attachments/assets/f1d522ed-e71d-4a53-81ed-972c976ae8ee)
+
+---
 
 🧭 **Flow:**
 1. Batch job finishes.
