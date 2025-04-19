@@ -75,9 +75,12 @@ Prometheus is an **open-source monitoring and alerting system** designed for **r
 ---
 
 ### ✅ 1. **Prometheus Server**
-The **core component** responsible for:
-- **Retrieving metrics** from configured targets (applications, exporters, services).
-- **Storing** those metrics in its internal **Time Series Database (TSDB)**.
+**Retrieval**: Responsible for pulling metrics from configured targets (like Node Exporter, application endpoints, or
+Pushgateway).
+- **TSDB (Time Series Database)**: Stores the metrics as time-stamped series data. Each metric is identified by a name
+and label set.
+- **HTTP Server**: Exposes APIs and web UI, allows querying via PromQL, and integrates with visualization tools and
+Alertmanager
 - **Running PromQL queries** for data analysis.
 - **Exposing APIs** for other systems (e.g., Grafana, Alertmanager).
 
