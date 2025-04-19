@@ -252,7 +252,7 @@ If you install Node Exporter on a VM:
 ---
 
 ### ✅ 4. **Prometheus Exporters**
-Exporters are **bridge tools** that collect metrics from external systems and expose them to Prometheus.
+**Exporters are tools that convert metrics from non-Prometheus native systems into a format that Prometheus can scrape. They act as translators, exposing system-specific data via an HTTP endpoint.**
 
 📝 **Purpose:**
 - Convert non-Prometheus-native metrics (OS, DBs, etc.) to Prometheus format.
@@ -265,9 +265,11 @@ Exporters are **bridge tools** that collect metrics from external systems and ex
 4. Prometheus scrapes this endpoint.
 
 📘 **Popular Exporters:**
-- **Node Exporter**: For Linux system metrics (CPU, memory, disk).
-- **Blackbox Exporter**: For endpoint probing (HTTP, TCP, DNS).
-- **MySQL/Postgres Exporter**: For database metrics.
+---
+![image](https://github.com/user-attachments/assets/b016707e-0f09-441a-9719-17a232e913f8)
+
+---
+
 
 📊 **Node Exporter Example:**
 ```
