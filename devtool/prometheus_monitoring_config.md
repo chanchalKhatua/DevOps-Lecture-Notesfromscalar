@@ -109,11 +109,11 @@ A **Time Series Database** is a **specialized database designed to store and man
     - "Show average memory usage over the last 24 hours"
     - "Find spikes in disk I/O during the last week"
 - Compressing repetitive time-stamped data efficiently
-- Supports **aggregation**:
-     > E.g., Average CPU usage per 5 minutes
-- Supports **downsampling**:
-      > Keep fewer data points over time for long-term storage  
-      → e.g., keep 1 value every 10 minutes after 24 hours.
+- **Aggregation**: Compute averages, max, min, etc.
+     - "Average CPU per 5 minutes"_
+- **Downsampling**: Reduce resolution for long-term storage.
+ - Instead of keeping data every second, keep **one value every 10 minutes** after a day
+
 
 📊 **Example Data Points:**
 ```
