@@ -269,8 +269,10 @@ If you install Node Exporter on a VM:
 ![image](https://github.com/user-attachments/assets/b016707e-0f09-441a-9719-17a232e913f8)
 
 ---
-
-
+1. **Install Node Exporter** on a Linux VM or container.
+2. It exposes a `/metrics` endpoint on port `9100`.
+3. Prometheus is configured to scrape `http://<ip>:9100/metrics`.
+4. Node Exporter exposes data like:
 📊 **Node Exporter Example:**
 ```
 node_cpu_seconds_total{cpu="0",mode="user"} 1532.3
