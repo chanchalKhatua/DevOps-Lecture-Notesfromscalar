@@ -449,9 +449,14 @@ scrape_configs:
 
 ```yaml
 scrape_configs:
-  - job_name: 'app_metrics'
+  - job_name: 'node_exporter'        # Job to scrape node exporter
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['localhost:9100']  # Expects Node Exporter metrics
+
+  - job_name: 'app_metrics'          # Job to scrape custom app metrics
+    static_configs:
+      - targets: ['localhost:8080']  # App exposing /metrics on port 8080
+
 ```
 
 ---
