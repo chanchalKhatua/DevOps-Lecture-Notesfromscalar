@@ -630,8 +630,35 @@ Client libraries allow developers to code custom instrumentation in their applic
 ---
 ![image](https://github.com/user-attachments/assets/3e3d704b-327e-4c4a-b30f-cdb182237a3f)
 ---
+ A cleaned-up and properly formatted version of your Python code using `prometheus_client`'s `Counter`, with clear structure and comments:
 
-### Example with Python (`prometheus_client`):
+```python
+from prometheus_client import Counter
+
+# Define a Counter to track the total number of HTTP requests
+request_counter = Counter('http_requests_total', 'Total HTTP Requests')
+
+# Example usage:
+request_counter.inc()      # Increment the counter by 1
+request_counter.inc(5)     # Increment the counter by 5
+
+# You can use this counter in web request handlers, background tasks, etc.
+```
+cleaned-up and correctly formatted Python snippet using `prometheus_client.Gauge`:
+
+```python
+from prometheus_client import Gauge
+
+# Define a Gauge to track memory usage in bytes
+memory_usage = Gauge('memory_usage_bytes', 'Memory usage in bytes')
+
+# Set the value of memory usage
+memory_usage.set(500)    # Set to 500 bytes
+
+# Decrease the memory usage by 50 bytes
+memory_usage.dec(50)
+```
+
 
 ```python
 from prometheus_client import Counter, Gauge, start_http_server
