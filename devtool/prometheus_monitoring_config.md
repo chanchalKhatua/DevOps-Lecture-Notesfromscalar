@@ -622,7 +622,14 @@ instance="localhost"
 
 ## 9. Client Libraries
 
-Client libraries let developers expose custom metrics:
+Client libraries allow developers to code custom instrumentation in their applications and expose metrics that Prometheus can scrape—usually on an HTTP endpoint like /metrics.
+
+- **Instrument your code**: Add metrics to track things like request durations, error rates, queue lengths, etc.
+- **Expose a `/metrics` endpoint**: The app exposes metrics in a Prometheus-compatible format.
+- **Control metric types and labels**
+---
+![image](https://github.com/user-attachments/assets/3e3d704b-327e-4c4a-b30f-cdb182237a3f)
+---
 
 ### Example with Python (`prometheus_client`):
 
