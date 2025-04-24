@@ -547,7 +547,26 @@ Into:
 ```text
 pod="nginx-abc123"
 ```
+###**Demo Example**
+```yaml
+global:
+  scrape_interval: 15s
 
+scrape_configs:
+  - job_name: "node"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["node_exporter:9100"]
+        labels:
+          environment: "production"
+          team: "infra"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: "(.*):.*"
+        replacement: "$1"
+
+```
 ---
 
 ### 🔍 5. **Labels in Node Exporter**
