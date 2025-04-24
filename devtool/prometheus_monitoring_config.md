@@ -462,48 +462,71 @@ scrape_configs:
 ---
 
 ## 7. Labels in Prometheus
+---
 
-### 🏷️ **Metric Labels:**
-Prometheus uses **labels** (key-value pairs) to add dimensions to time series data.
-
-#### Example Metric:
-```prometheus
-http_requests_total{method="GET", status="200"}
-```
-
-- `http_requests_total`: The metric name.
-- `{method="GET", status="200"}`: Labels attached to the metric.
-
-These labels enable:
-- Filtering: `http_requests_total{status="500"}`
-- Grouping: `sum by (method) (http_requests_total)`
-- Aggregation: `rate(http_requests_total[5m])`
-
-Labels provide context to metrics:
-
-```text
-http_requests_total{method="GET", status="200"}
-```
-
-### Label Types:
-
-- **Static**:
-```yaml
-labels:
-  env: 'production'
-  service: 'frontend'
-```
-
-- **Dynamic** (e.g. Kubernetes metadata):
-```yaml
-__meta_kubernetes_pod_name="nginx-abc123"
-```
+## 🔖 Prometheus Labels: Static, Dynamic & Relabeling
 
 ---
 
-## 8. Relabeling Demo
+### 🟢 1. **What are Labels?**
 
-Used to transform or rename labels dynamically:
+In **Prometheus**, **labels are key-value pairs** that are attached to each time series.  
+They help **differentiate**, **filter**, **group**, and **aggregate** metrics efficiently.
+
+#### 📌 Example:
+```promql
+http_requests_total{method="GET", status="200"}
+```
+
+- **Metric Name**: `http_requests_total`
+- **Labels**:
+  - `method="GET"`
+  - `status="200"`
+
+---
+
+### 🟨 2. **Static Labels**
+
+These labels are manually assigned in the `prometheus.yml` config and do not change dynamically.
+
+#### 🧾 Example:
+```yaml
+scrape_configs:
+  - job_name: 'app'
+    static_configs:
+      - targets: ['localhost:8080']
+        labels:
+          env: 'production'
+          service: 'frontend'
+```
+
+🟢 These labels (`env`, `service`) are **applied to all targets** in this block.  
+They help **identify and filter metrics** by application context (e.g., dev, prod).
+
+---
+
+### 🟦 3. **Dynamic Labels**
+
+These are generated **automatically** by **service discovery mechanisms**, like Kubernetes, EC2, or Consul.
+
+#### 📦 Kubernetes Example:
+When Prometheus discovers a pod, it auto-generates metadata:
+
+```yaml
+__meta_kubernetes_namespace="default"
+__meta_kubernetes_pod_name="nginx-1234"
+```
+
+🟡 These are **temporary meta-labels** used during **target discovery**.
+
+---
+
+### 🔁 4. **Relabeling**
+
+**Relabeling** is used to **modify labels** or **drop targets** before scraping.  
+It can convert `__meta_*` labels into usable, permanent labels.
+
+#### 🔄 Example – Add a `pod` label from Kubernetes pod name:
 
 ```yaml
 relabel_configs:
@@ -511,6 +534,70 @@ relabel_configs:
     target_label: pod
     action: replace
 ```
+
+- `source_labels`: List of metadata labels to use
+- `target_label`: New label to add or replace
+- `action`: What to do (`replace`, `keep`, `drop`, etc.)
+
+➡️ This will turn:
+```text
+__meta_kubernetes_pod_name="nginx-abc123"
+```
+Into:
+```text
+pod="nginx-abc123"
+```
+
+---
+
+### 🔍 5. **Labels in Node Exporter**
+
+When you scrape Node Exporter:
+```yaml
+- job_name: 'node_exporter'
+  static_configs:
+    - targets: ['localhost:9100']
+```
+
+You’ll get a label like:
+```text
+instance="localhost:9100"
+```
+
+> This is added **automatically** to identify the scraped endpoint.
+
+You can relabel it if needed:
+
+```yaml
+relabel_configs:
+  - source_labels: [__address__]
+    target_label: instance
+    regex: '(.*):9100'
+    replacement: '${1}'
+    action: replace
+```
+
+This removes the port from `instance`, changing:
+```
+instance="localhost:9100"
+```
+to:
+```
+instance="localhost"
+```
+
+---
+
+### ✅ Summary Table
+
+| Feature             | Example                                             | Purpose                                      |
+|---------------------|-----------------------------------------------------|----------------------------------------------|
+| Static Labels       | `env="production"`                                  | Manual context tagging                       |
+| Dynamic Labels      | `__meta_kubernetes_pod_name="nginx"`                | Auto-discovery metadata                      |
+| Relabeling          | `source_labels -> target_label (pod="nginx")`       | Transform metadata to permanent labels       |
+| Instance Label      | `instance="localhost:9100"`                         | Auto-tagging target address                  |
+
+---
 
 ---
 
