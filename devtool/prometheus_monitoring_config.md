@@ -408,7 +408,31 @@ networks:
 ---
 
 ## 6. Scraping Configuration
+---
 
+### 🔄 **How Prometheus Scraping Works**
+Prometheus uses a **pull model** for collecting metrics. It sends **HTTP GET** requests to `/metrics` endpoints exposed by services or exporters. The response is plain text and contains the metric data.
+
+---
+
+### ⚙️ **Example `scrape_configs` in `prometheus.yml`**
+```yaml
+scrape_configs:
+  - job_name: 'node_exporter'  # Monitoring system-level metrics
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'app_metrics'  # Your custom application metrics
+    static_configs:
+      - targets: ['localhost:8080']
+```
+
+- Each `job_name` defines a group of targets.
+- `static_configs` holds one or more endpoints for Prometheus to scrape.
+
+You can also use service discovery methods (like EC2, Consul, Kubernetes, etc.), but `static_configs` is the most straightforward for local/dev setups.
+
+---
 ### Sample `prometheus.yml`
 
 ```yaml
@@ -433,6 +457,22 @@ scrape_configs:
 ---
 
 ## 7. Labels in Prometheus
+
+### 🏷️ **Metric Labels:**
+Prometheus uses **labels** (key-value pairs) to add dimensions to time series data.
+
+#### Example Metric:
+```prometheus
+http_requests_total{method="GET", status="200"}
+```
+
+- `http_requests_total`: The metric name.
+- `{method="GET", status="200"}`: Labels attached to the metric.
+
+These labels enable:
+- Filtering: `http_requests_total{status="500"}`
+- Grouping: `sum by (method) (http_requests_total)`
+- Aggregation: `rate(http_requests_total[5m])`
 
 Labels provide context to metrics:
 
