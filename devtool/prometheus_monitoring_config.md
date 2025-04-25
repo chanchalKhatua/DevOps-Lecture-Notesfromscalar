@@ -631,63 +631,107 @@ Client libraries allow developers to code custom instrumentation in their applic
 ![image](https://github.com/user-attachments/assets/3e3d704b-327e-4c4a-b30f-cdb182237a3f)
 ---
  A cleaned-up and properly formatted version of your Python code using `prometheus_client`'s `Counter`, with clear structure and comments:
+ ###**DEMO**
+![image](https://github.com/user-attachments/assets/4f48f06c-e08d-407e-a8da-a23665df4cb3)
+ Docker-compose.yml
+```yaml
+version: "3"
 
-```python
-from prometheus_client import Counter
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Prometheus config file
+      - prometheus_data:/prometheus                      # Persistent data storage
+    ports:
+      - "9090:9090"                                       # Prometheus web UI
+    networks:
+      - monitoring
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"    # Load Prometheus config
 
-# Define a Counter to track the total number of HTTP requests
-request_counter = Counter('http_requests_total', 'Total HTTP Requests')
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    ports:
+      - "9100:9100"                                       # Node Exporter metrics
+    networks:
+      - monitoring
 
-# Example usage:
-request_counter.inc()      # Increment the counter by 1
-request_counter.inc(5)     # Increment the counter by 5
+  custom_exporter:
+    build: ./custom-exporter                             # Path to Dockerfile for custom exporter
+    container_name: custom_exporter
+    ports:
+      - "8000:8000"                                       # Custom metrics exposed here
+    networks:
+      - monitoring
 
-# You can use this counter in web request handlers, background tasks, etc.
+volumes:
+  prometheus_data:                                       # Volume for Prometheus data
+
+networks:
+  monitoring:
+    driver: bridge
 ```
-cleaned-up and correctly formatted Python snippet using `prometheus_client.Gauge`:
+**prometheus.yml**
 
-```python
-from prometheus_client import Gauge
+```yaml
+global:
+  scrape_interval: 15s
 
-# Define a Gauge to track memory usage in bytes
-memory_usage = Gauge('memory_usage_bytes', 'Memory usage in bytes')
+scrape_configs:
+  - job_name: "node"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["node_exporter:9100"]
+        labels:
+          environment: "production"
+          team: "infra"
 
-# Set the value of memory usage
-memory_usage.set(500)    # Set to 500 bytes
-
-# Decrease the memory usage by 50 bytes
-memory_usage.dec(50)
+  - job_name: "custom"
+    static_configs:
+      - targets: ["custom_exporter:8000"]
+    metrics_path: "/metrics"
 ```
-
-
+**app.py**
 ```python
-from prometheus_client import Counter, Gauge, start_http_server
+from prometheus_client import start_http_server, Counter, Gauge
 import time
 
 # Define metrics
-http_requests_total = Counter('http_requests_total', 'Total HTTP requests')
-http_request_duration_seconds = Gauge('http_request_duration_seconds', 'Request duration in seconds')
+http_requests_total = Counter('http_requests_total', 'Total number of HTTP requests')
+http_request_duration_seconds = Gauge('http_request_duration_seconds', 'Duration of HTTP requests in seconds')
 
+# Simulate an HTTP request
 def simulate_request():
     http_requests_total.inc()
-    duration = 0.5
+    duration = 0.5  # Simulated duration in seconds
     http_request_duration_seconds.set(duration)
     time.sleep(duration)
 
 if __name__ == '__main__':
-    start_http_server(8000)
+    start_http_server(8000)  # Expose metrics at http://localhost:8000
     while True:
         simulate_request()
         time.sleep(1)
 ```
-
 ### Dockerfile for Custom Exporter:
 
 ```Dockerfile
+# Use an official Python runtime as the base image
 FROM python:3.9-slim
+
+# Set the working directory in the container
 WORKDIR /app
+
+# Copy the current directory contents into the container at /app
 COPY . /app
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Run the application
 CMD ["python", "app.py"]
 ```
 
