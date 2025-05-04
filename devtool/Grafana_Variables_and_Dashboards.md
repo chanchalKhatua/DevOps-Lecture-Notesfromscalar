@@ -17,6 +17,13 @@
 - Community support
 - Follows best practices
 - Easy to customize
+### Advantages of Ready made Dashboards
+- Time saving
+- Pre configured visualizations
+- BestPractices
+- Community support
+- Integration with various Data Sources
+- Customizable
 
 ### 🚀 How to Import
 - Use Grafana.com dashboards
