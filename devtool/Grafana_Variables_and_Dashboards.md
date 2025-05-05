@@ -34,7 +34,7 @@
   - Adjust panels
   - Change thresholds/alerts
 ---
-### ✅ Best Practices
+### ✅ Best Practices for importing Dashboards
 - Save original JSON (for version control)
 - Document changes
 - Test panel functionality
@@ -46,6 +46,8 @@
 - updating queries
 - Panel Adjustments
 - Dashboard settings
+
+
 ---
 
 ## 2. 🔄 Variables & Dynamic Dashboards
