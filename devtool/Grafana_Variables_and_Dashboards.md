@@ -35,11 +35,13 @@
   - Change thresholds/alerts
 ---
 ### ✅ Best Practices for importing Dashboards
-- Save original JSON (for version control)
-- Document changes
-- Test panel functionality
-- Share improvements back
-- Check for updates regularly
+1. **Version Control**: Save a copy of the original dashboard JSON before making changes
+2. **Documentation**: Add notes about why certain modifications were made
+3. **Testing**: Verify all panels work with your data after import
+4. **Sharing**: Consider contributing improvements back to the community
+5. **Regular Updates**: Check for newer versions of popular dashboards periodically
+
+B
 ---
 ### Dashboard customization after import
 - Adjusting variables
