@@ -17,6 +17,7 @@
 - Community support
 - Follows best practices
 - Easy to customize
+---
 ### Advantages of Ready made Dashboards
 - Time saving
 - Pre configured visualizations
@@ -24,7 +25,7 @@
 - Community support
 - Integration with various Data Sources
 - Customizable
-
+---
 ### 🚀 How to Import
 - Use Grafana.com dashboards
 - Upload or paste JSON
@@ -32,14 +33,19 @@
   - Update variables & queries
   - Adjust panels
   - Change thresholds/alerts
-
+---
 ### ✅ Best Practices
 - Save original JSON (for version control)
 - Document changes
 - Test panel functionality
 - Share improvements back
 - Check for updates regularly
-
+---
+### Dashboard customization after import
+- Adjusting variables
+- updating queries
+- Panel Adjustments
+- Dashboard settings
 ---
 
 ## 2. 🔄 Variables & Dynamic Dashboards
