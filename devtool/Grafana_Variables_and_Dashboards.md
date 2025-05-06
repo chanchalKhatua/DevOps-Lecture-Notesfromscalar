@@ -104,6 +104,8 @@ display data for different hosts, regions, or any other criteria dynamically.
 
   ```
   interval = (Time Range) / (Resolution)
+  $--internal
+  $--rate_internal
   ```
 
   where **Resolution** is usually the number of pixels or maximum data points the graph can display.
