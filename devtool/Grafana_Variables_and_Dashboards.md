@@ -55,6 +55,8 @@ B
 ## 2. 🔄 Variables & Dynamic Dashboards
 
 ### 🎯 Purpose
+Instead of hardcoding values, you can insert variables (like $instance or $environment) so that a single dashboard can
+display data for different hosts, regions, or any other criteria dynamically.
 - Avoid hardcoding
 - Allow dashboards to adapt to:
   - Instance
