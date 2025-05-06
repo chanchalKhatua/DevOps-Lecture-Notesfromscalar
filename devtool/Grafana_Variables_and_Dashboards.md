@@ -65,6 +65,8 @@ display data for different hosts, regions, or any other criteria dynamically.
 
 ### 🔧 Types of Variables
 - **Query**: e.g., `$instance`, populated from Prometheus
+- ![image](https://github.com/user-attachments/assets/2910a599-79d7-4144-82ed-2a01a3cf8c9d)
+
 - **Custom**: Fixed dropdown
 - **Interval**: Auto time-based granularity
 
