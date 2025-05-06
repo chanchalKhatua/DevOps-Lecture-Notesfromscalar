@@ -69,6 +69,46 @@ display data for different hosts, regions, or any other criteria dynamically.
 
 - **Custom**: Fixed dropdown
 - **Interval**: Auto time-based granularity
+  Here's a clearer explanation of each term you're referencing, especially in the context of monitoring tools like Grafana or Prometheus dashboards:
+
+---
+
+### 🔹 **Time Range**
+
+* **Definition**: The **overall window of time** you're viewing data for.
+* **Example**: Last 1 hour, Last 24 hours, Last 7 days, etc.
+* **Purpose**: Determines the start and end times for the data you want to visualize or query.
+
+---
+
+### 🔹 **Interval**
+
+* **Definition**: The **granularity** or **step size** of the data points in the graph.
+* **Example**: 1m (1 minute), 5m (5 minutes), 1h (1 hour)
+* **Purpose**: Controls how often the data points are plotted—smaller intervals mean more detailed graphs.
+
+---
+
+### 🔹 **Auto Interval**
+
+* **Definition**: A feature that **automatically selects an appropriate interval** based on your selected time range and the panel width.
+* **Purpose**: Prevents overloading graphs with too many data points or making them too sparse.
+* **Example**: If your time range is 24 hours, it might auto-select a 5-minute interval.
+
+---
+
+### 🔹 **Auto Interval Calculation**
+
+* **Definition**: The **internal logic** used to calculate the best interval for your graph.
+* **Formula (typical)**:
+
+  ```
+  interval = (Time Range) / (Resolution)
+  ```
+
+  where **Resolution** is usually the number of pixels or maximum data points the graph can display.
+
+---
 
 ### 🧠 Benefits
 - Improved efficiency
