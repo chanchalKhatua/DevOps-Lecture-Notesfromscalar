@@ -121,16 +121,49 @@ display data for different hosts, regions, or any other criteria dynamically.
 
 ## 3. 🔗 Links in Dashboards
 
-### 📈 Use Cases
-- Navigate between dashboards/panels
-- Drill down into details
-- Enhance workflow
+**Links** in Grafana are clickable elements that you can add to dashboards or panels to improve navigation, exploration, and usability.
 
-### 🔗 Types
-- Dashboard links
-- Panel links
-- Data links
+---
 
+### 🧭 Types of Links
+
+1. **Dashboard Links**
+
+   * Navigate from one dashboard to another.
+   * Useful for jumping from summary dashboards to detailed ones.
+
+2. **Panel Links**
+
+   * Add clickable links to panel titles or visualizations.
+   * Good for contextual navigation within dashboards.
+
+3. **Data Links**
+
+   * Enable drill-down into detailed data.
+   * Allow linking to logs, metrics, traces, or external systems (e.g., Loki, Elasticsearch).
+
+---
+
+### 📍 Example: Clicking on a Data Point (DP)
+
+When clicking on a data point in a panel (e.g., a spike in CPU usage), you can configure a **data link** that redirects to:
+
+* A detailed Grafana dashboard with filters applied.
+* A log viewer showing logs during that spike.
+* An external monitoring or tracing tool.
+
+---
+
+### ✅ Benefits of Using Links
+
+* **Enhanced Navigation**
+  Quickly move between summary and detailed dashboards for faster insights.
+
+* **Streamlined Workflow**
+  Help users drill down into specific metrics or logs without manually searching.
+
+* **Improved User Experience**
+  Provides a cohesive, intuitive flow within the monitoring environment.
 ---
 
 ## 4. 🏷 Tags for Organization
