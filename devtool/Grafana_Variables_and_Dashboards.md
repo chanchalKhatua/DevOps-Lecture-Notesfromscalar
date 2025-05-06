@@ -168,17 +168,57 @@ When clicking on a data point in a panel (e.g., a spike in CPU usage), you can c
 
 ## 4. 🏷 Tags for Organization
 
-### 📌 Benefits
-- Easier dashboard grouping
-- Faster filtering & navigation
-- Improved team collaboration
-
-### ✔ Best Practices
-- Keep names consistent
-- Use meaningful tags like: `DevOps`, `Critical`, `Production`
-- Update tags as projects evolve
+**Definition**:
+Tags are **simple, descriptive labels** attached to dashboards to help organize, filter, and manage them effectively.
 
 ---
+
+### ✅ **Benefits of Using Tags**
+
+1. **🔹 Enhanced Organization**
+
+   * Group dashboards by environment, team, or service.
+   * Example: "prod", "dev", "infra", etc.
+
+2. **🔍 Quick Navigation**
+
+   * Easily filter dashboards using tags.
+   * Helpful during incident response or when accessing relevant dashboards quickly.
+
+3. **🤝 Improved Collaboration**
+
+   * Makes it easier for teams to find dashboards relevant to their domain.
+   * Reduces dependency on naming conventions alone.
+
+---
+
+### 🛠️ **Best Practices**
+
+* ✅ **Consistency**: Use a consistent naming format (e.g., `team:devops`, `env:prod`, `svc:mysql`).
+* ✅ **Meaningful Labels**: Choose tags that reflect real-world categorizations:
+
+  * Examples: `"Critical"`, `"Database"`, `"DevOps"`, `"Frontend"`, `"SRE"`.
+* ✅ **Maintain Tags**: Regularly review and update tags to ensure they reflect current project structures or teams.
+
+---
+
+### 📦 **Example JSON Usage**
+
+```json
+{
+  "title": "Node Exporter Full",
+  "tags": ["team:infra", "env:prod", "svc:linux"]
+}
+```
+
+This indicates:
+
+* Team responsible: Infra
+* Environment: Production
+* Service: Linux nodes
+
+---
+
 
 ## 5. 🌐 Multiple Data Sources
 
