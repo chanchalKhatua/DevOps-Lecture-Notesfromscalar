@@ -95,7 +95,20 @@ aws iam create-group --group-name test
 ```bash
 aws iam create-user --user-name devops-user
 ```
-### Create a sample policy named AWSPolicy.
+
+
+1. Create the policy `AWSPolicy`
+2. Create the IAM role `AWSRole` for EC2
+3. Attach the policy to the role
+
+---
+
+## 🪄 **Step-by-Step AWS CLI Commands**
+
+### ✅ 1. Create the IAM Policy
+
+Save the following policy JSON as a file named `aws_policy.json`:
+
 ```json
 {
   "Version": "2012-10-17",
@@ -119,14 +132,79 @@ aws iam create-user --user-name devops-user
   ]
 }
 ```
+
+Then run:
+
 ```bash
-aws iam create-policy --policy-name AWSPlolicy --policy-document file://./policy.json 
+aws iam create-policy \
+  --policy-name AWSPolicy \
+  --policy-document file://aws_policy.json
 ```
+## If we want attach policy to user
 ### Attach policy to user
 ```bash
 aws iam attach-user-policy \
   --user-name devops-user \
   --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+```
+---
+
+### ✅ 2. Create the Trust Policy for EC2
+
+Save this trust policy as `ec2-trust-policy.json`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+
+
+```bash
+aws iam create-role \
+  --role-name AWSRole \
+  --assume-role-policy-document file://ec2-trust-policy.json
+```
+
+---
+
+### ✅ 3. Attach the Policy to the Role
+
+Assuming the ARN you got in step 1 was something like:
+
+```
+arn:aws:iam::<your-account-id>:policy/AWSPolicy
+```
+
+Run:
+
+```bash
+aws iam attach-role-policy \
+  --role-name AWSRole \
+  --policy-arn arn:aws:iam::<your-account-id>:policy/AWSPolicy
+```
+
+(Replace `<your-account-id>` with your actual AWS account ID)
+
+---
+
+## 🔄 Final Check
+
+To confirm everything was created correctly:
+
+```bash
+aws iam list-roles | grep AWSRole
+aws iam list-policies | grep AWSPolicy
 ```
 
 ---
