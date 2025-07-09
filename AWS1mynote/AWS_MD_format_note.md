@@ -86,7 +86,7 @@
 
 ##   Edge Locations
 
-* Edge Locations are endpoints in the AWS global network used by CloudFront and Route 53 to cache content closer to users.
+* Edge Locations are endpoints in the AWS global network used by Amazon CloudFront (a content delivery network) and Amazon Route 53 (a DNS service) to cache content closer to users, which reduces latency.
 
 ##   Local Zone
 
