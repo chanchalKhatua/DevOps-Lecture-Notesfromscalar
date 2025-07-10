@@ -417,6 +417,96 @@ You have 3 AWS accounts: `Dev`, `Staging`, `Prod`.
 * Developers can now log in through the SSO portal and switch between accounts.
 
 ---
+### ✅ **Permission Sets in IAM Identity Center (formerly AWS SSO)**
+
+A **Permission Set** is a **collection of IAM policies** (managed or custom) that define what **actions** users or groups can perform **when they access an AWS account** via IAM Identity Center.
+
+---
+
+### 📦 **What’s Inside a Permission Set?**
+
+Each permission set includes:
+
+* ✅ One or more **IAM policies**
+
+  * AWS managed policies (like `AdministratorAccess`, `ReadOnlyAccess`)
+  * Custom inline policies (JSON)
+* ✅ Optional session settings
+
+  * Session duration (1–12 hours)
+  * Require MFA
+  * Relay state URL (for redirecting users post-login)
+
+---
+
+### 🔁 **How It Works – Big Picture**
+
+1. **Create a permission set**
+   Example: `DeveloperAccess` with `AmazonEC2FullAccess` and `CloudWatchReadOnlyAccess`.
+
+2. **Assign it to a user or group**
+   Example: Assign the `DeveloperAccess` permission set to the `DevTeam` group for the `dev-account`.
+
+3. **User logs into the SSO portal**
+   They'll see `dev-account` and access AWS with only the permissions from `DeveloperAccess`.
+
+---
+
+### 🛠️ **How to Create a Permission Set (Console)**
+
+1. Go to **IAM Identity Center** → **Permission sets**
+2. Click **Create permission set**
+3. Choose one:
+
+   * Use an **AWS managed policy** (e.g., `PowerUserAccess`)
+   * Or create a **custom permissions policy** (write JSON)
+4. Set **session duration**, **MFA**, etc.
+5. Save and **assign** it to users/groups and AWS accounts
+
+---
+
+### 📌 **Example Custom Policy for Read-Only EC2 Access**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "cloudwatch:GetMetricData"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+### 🔐 **Best Practices**
+
+| Recommendation                                 | Why it matters                                 |
+| ---------------------------------------------- | ---------------------------------------------- |
+| Use **least privilege**                        | Grant only what’s needed to reduce risk        |
+| Use **permission boundaries** for custom roles | Add another layer of control                   |
+| Regularly **review permission sets**           | Prevent stale access                           |
+| Use **naming conventions**                     | e.g., `Prod-Admin`, `Dev-ReadOnly` for clarity |
+
+---
+
+### 📘 **Use Case Matrix**
+
+| User Role        | AWS Account | Permission Set         |
+| ---------------- | ----------- | ---------------------- |
+| Developer        | `dev`       | `EC2-FullAccess`       |
+| QA Tester        | `dev`       | `ReadOnlyAccess`       |
+| Ops Admin        | `prod`      | `AdminAccessWithMFA`   |
+| Security Analyst | `all`       | `CloudTrailReadAccess` |
+
+---
+
 
 
 
