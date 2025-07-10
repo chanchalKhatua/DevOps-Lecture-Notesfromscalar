@@ -345,71 +345,80 @@ This feature allows the **management account** (or optionally a delegated admin 
 
 ### **IAM Identity Center (formerly AWS SSO)**
 
-IAM Identity Center (formerly AWS SSO) is a centralized way to manage access to AWS accounts and applications using single sign-on (SSO) for your users across your organization.
+**IAM Identity Center (formerly AWS SSO)** is a centralized way to manage access to **AWS accounts** and **applications** using **single sign-on (SSO)** for your users across your organization.
 
 Here's a breakdown to help you understand it better:
 
-✅ What is IAM Identity Center?
-IAM Identity Center enables you to:
+---
 
-✅ Manage user identities centrally (from AWS, Active Directory, or external identity providers like Google Workspace or Okta).
+### ✅ **What is IAM Identity Center?**
 
-✅ Assign and control permissions for multiple AWS accounts.
+**IAM Identity Center** enables you to:
 
-✅ Provide single sign-on (SSO) access to AWS accounts and third-party applications (like Salesforce, GitHub, etc.).
+* ✅ Manage **user identities** centrally (from AWS, Active Directory, or external identity providers like Google Workspace or Okta).
+* ✅ Assign and control **permissions** for multiple AWS accounts.
+* ✅ Provide **single sign-on** (SSO) access to AWS accounts and third-party applications (like Salesforce, GitHub, etc.).
 
-🧠 Core Concepts
-Concept	Description
-User/Group Management	You can create users/groups in Identity Center or connect to existing IdPs.
-Permission Sets	Predefined IAM policies (roles) that you assign to users or groups.
-Account Assignments	Control which user/group can access which AWS account with what permissions.
-SSO Portal	Users sign in to a central portal (like https://my-sso-portal.awsapps.com) to access assigned apps/accounts.
+---
 
-🔗 Identity Source Options
+### 🧠 **Core Concepts**
+
+| Concept                   | Description                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **User/Group Management** | You can create users/groups in Identity Center or connect to existing IdPs.                                    |
+| **Permission Sets**       | Predefined IAM policies (roles) that you assign to users or groups.                                            |
+| **Account Assignments**   | Control which user/group can access which AWS account with what permissions.                                   |
+| **SSO Portal**            | Users sign in to a central portal (like `https://my-sso-portal.awsapps.com`) to access assigned apps/accounts. |
+
+---
+
+### 🔗 **Identity Source Options**
+
 You can choose one of these as your identity source:
 
-AWS IAM Identity Center (built-in)
+* AWS IAM Identity Center (built-in)
+* AWS Managed Microsoft AD
+* External IdPs via SAML 2.0 (Okta, Azure AD, etc.)
 
-AWS Managed Microsoft AD
+---
 
-External IdPs via SAML 2.0 (Okta, Azure AD, etc.)
+### 🛠️ **How It Works (Simplified Flow)**
 
-🛠️ How It Works (Simplified Flow)
-Admin Setup
+1. **Admin Setup**
 
-Define users and groups (or sync from external IdP).
+   * Define users and groups (or sync from external IdP).
+   * Create **Permission Sets** with the needed IAM policies.
+   * Assign users/groups to AWS accounts with specific permission sets.
 
-Create Permission Sets with the needed IAM policies.
+2. **User Login**
 
-Assign users/groups to AWS accounts with specific permission sets.
+   * Users go to the SSO portal and sign in.
+   * They see a list of AWS accounts/apps they're allowed to access.
+   * Click to access—no need for IAM users or access keys.
 
-User Login
+---
 
-Users go to the SSO portal and sign in.
+### 🛡️ **Benefits**
 
-They see a list of AWS accounts/apps they're allowed to access.
+* 🚫 No need to create individual IAM users in each account.
+* 🔒 Enforces **MFA** centrally.
+* 🔍 Easier auditing and **access reviews**.
+* 🧹 Centralized access revocation.
 
-Click to access—no need for IAM users or access keys.
+---
 
-🛡️ Benefits
-🚫 No need to create individual IAM users in each account.
+### 📋 **Example Use Case**
 
-🔒 Enforces MFA centrally.
+You have 3 AWS accounts: `Dev`, `Staging`, `Prod`.
 
-🔍 Easier auditing and access reviews.
+* You create a group called `Developers`.
+* You define a permission set called `ReadOnlyAccess`.
+* You assign the `Developers` group to `Dev` and `Staging` accounts with `ReadOnlyAccess`.
+* Developers can now log in through the SSO portal and switch between accounts.
 
-🧹 Centralized access revocation.
+---
 
-📋 Example Use Case
-You have 3 AWS accounts: Dev, Staging, Prod.
 
-You create a group called Developers.
-
-You define a permission set called ReadOnlyAccess.
-
-You assign the Developers group to Dev and Staging accounts with ReadOnlyAccess.
-
-Developers can now log in through the SSO portal and switch between accounts.
 
 
 
