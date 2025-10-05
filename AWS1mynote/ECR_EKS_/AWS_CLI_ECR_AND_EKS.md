@@ -1,7 +1,4 @@
 
----
-
-````markdown
 # Q1. Create an ECR Repository and Push a Docker Image
 
 ## ✅ Problem
