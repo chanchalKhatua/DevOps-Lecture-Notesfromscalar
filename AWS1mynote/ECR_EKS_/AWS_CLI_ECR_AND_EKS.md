@@ -1,43 +1,113 @@
-ECR and Docker CLI Commands
-A collection of the CLI commands needed to create an ECR repository and push a Docker image to it.
 
-1. Get Your AWS Account ID
-This command retrieves your 12-digit AWS Account ID.
+---
 
-aws sts get-caller-identity --query Account --output text
+````markdown
+# Q1. Create an ECR Repository and Push a Docker Image
 
-2. Create the ECR Repository
-This command creates a new private ECR repository.
+## ✅ Problem
+Create a private ECR repository named `lab-repo-<ACCOUNT_ID>` in `us-west-2`, build a Docker image, and push it to ECR.
 
-aws ecr create-repository --repository-name lab-repo-<ACCOUNT_ID> --region us-west-2
+---
 
-3. Create the Dockerfile
-Use a text editor like vi to create the Dockerfile.
+## 🧭 Steps to Solve
 
+### 1. Create ECR Repository
+Run the following command in the CLI:
+```bash
+aws ecr create-repository \
+  --repository-name lab-repo-<ACCOUNT_ID> \
+  --region us-west-2
+````
+
+---
+
+### 2. Create a Dockerfile
+
+Open the Dockerfile using `vi` with sudo privileges:
+
+```bash
 sudo vi Dockerfile
+```
 
-Dockerfile Content:
+Password: `user@123!`
 
+Add the following content inside the file (replace `<ACCOUNT_ID>` with your actual AWS account ID):
+
+```dockerfile
 FROM alpine:3.18
 CMD ["echo", "Hello from lab-repo-<ACCOUNT_ID>!"]
+```
 
-4. Authenticate Docker to ECR
-This command retrieves an authentication token and logs the Docker client into your ECR registry.
+Save and exit the file (`:wq` in vi).
 
+---
+
+### 3. Authenticate Docker to ECR
+
+Authenticate Docker with your AWS ECR registry:
+
+```bash
 aws ecr get-login-password --region us-west-2 \
   | sudo docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com
+```
 
-5. Build the Docker Image
-Build the image locally from your Dockerfile.
+---
 
+### 4. Build the Docker Image
+
+Build the Docker image using `sudo`:
+
+```bash
 sudo docker build -t lab-repo-<ACCOUNT_ID> .
+```
 
-6. Tag the Docker Image for ECR
-Tag the locally built image with the ECR repository URI so you can push it.
+---
 
-sudo docker tag lab-repo-<ACCOUNT_ID>:latest <ACCOUNT_ID>[.dkr.ecr.us-west-2.amazonaws.com/lab-repo-](https://.dkr.ecr.us-west-2.amazonaws.com/lab-repo-)<ACCOUNT_ID>:latest
+### 5. Tag the Image
 
-7. Push the Image to ECR
-Push the tagged image to your ECR repository.
+Tag the image for ECR:
 
-sudo docker push <ACCOUNT_ID>[.dkr.ecr.us-west-2.amazonaws.com/lab-repo-](https://.dkr.ecr.us-west-2.amazonaws.com/lab-repo-)<ACCOUNT_ID>:latest
+```bash
+sudo docker tag lab-repo-<ACCOUNT_ID>:latest <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/lab-repo-<ACCOUNT_ID>:latest
+```
+
+---
+
+### 6. Push the Image to ECR
+
+Push the image to the ECR repository:
+
+```bash
+sudo docker push <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/lab-repo-<ACCOUNT_ID>:latest
+```
+
+---
+
+### 7. Verify the Upload
+
+Go to the AWS Management Console → **ECR** → **Repositories** → `lab-repo-<ACCOUNT_ID>`
+Check that the **latest** tag appears successfully.
+
+---
+
+## 🧾 Example Output
+
+```
+Repository URI: <ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/lab-repo-<ACCOUNT_ID>
+Image Tag: latest
+Image successfully pushed to ECR.
+```
+
+---
+
+**✅ Final Check:**
+
+* ECR repository created
+* Docker image built and pushed successfully
+* `latest` tag visible in AWS ECR console
+
+```
+
+---
+
+```
