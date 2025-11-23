@@ -97,6 +97,7 @@ The service uses a pipeline approach to solve these issues:
 3.  **Distribution Configuration:** Defines where the final image should be sent (specific AWS Regions and Accounts).
 4.  **Schedule:** Automates when the pipeline runs (e.g., weekly or whenever the source image updates).
 5.  **Cascading Pipelines:** You can chain pipelines together. for example, a "Base Security Pipeline" produces a secured image, which then triggers a "Web Server Pipeline" and a "Database Pipeline" to add workload-specific software.
+<img width="1063" height="715" alt="image" src="https://github.com/user-attachments/assets/1766a7e8-367a-44b5-8760-1c2ec7cbe14d" />
 
 ---
 
