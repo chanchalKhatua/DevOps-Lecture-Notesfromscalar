@@ -19,7 +19,7 @@ AWS offers a wide variety of storage services tailored to different needs, acces
 * **Hybrid and Edge Storage:**
     * **AWS Storage Gateway:** Integrates on-premises environments with cloud storage. Types include **File Gateway**, **Volume Gateway** (Stored and Cached volumes), and **Tape Gateway**.
     * **AWS Snow Family:** Physical devices for data migration and edge computing, including **Snowball Edge** and **Snowmobile**.
-<img width="779" height="393" alt="image" src="https://github.com/user-attachments/assets/f51aaea8-05c6-4c94-8d69-0405316a24ac" />
+<img width="779" height="593" alt="image" src="https://github.com/user-attachments/assets/f51aaea8-05c6-4c94-8d69-0405316a24ac" />
 
 ---
 
@@ -55,7 +55,7 @@ EC2 snapshots are point-in-time copies of EBS volumes used for data protection, 
 * Use AWS Backup or automated scripts for regular snapshots.
 * Stop the instance or detach the volume to ensure data consistency before snapshotting.
 * Tag snapshots for organization and use lifecycle policies to automate deletion.
-<img width="776" height="382" alt="image" src="https://github.com/user-attachments/assets/85f32413-cf38-4230-941d-604f58f53eaa" />
+<img width="776" height="682" alt="image" src="https://github.com/user-attachments/assets/85f32413-cf38-4230-941d-604f58f53eaa" />
 
 ---
 
@@ -68,7 +68,7 @@ You cannot directly enable encryption on an existing unencrypted AMI or Snapshot
 2.  Initiate a **Copy AMI** process (to the same or a different region).
 3.  Select the **Encrypt** option and choose an AWS KMS key.
 4.  This process is also used to **re-encrypt** an already encrypted AMI with a different key.
-<img width="974" height="360" alt="image" src="https://github.com/user-attachments/assets/eaeeab33-9088-4685-a0d2-da2e3ff221fe" />
+<img width="974" height="560" alt="image" src="https://github.com/user-attachments/assets/eaeeab33-9088-4685-a0d2-da2e3ff221fe" />
 
 ### Sharing Encrypted AMIs Across Accounts
 Sharing encrypted AMIs is more complex than sharing unencrypted ones because the target account needs access to both the AMI and the encryption key.
@@ -78,7 +78,7 @@ Sharing encrypted AMIs is more complex than sharing unencrypted ones because the
 3.  **Step 2 (AMI Permissions):** Modify the AMI permissions to share the AMI with the target account ID.
 4.  **Step 3 (Snapshot Permissions):** Share any associated snapshots with the target account.
 5.  **Target Account Limitations:** The target account can create volumes and instances from the shared AMI but **cannot re-share** the AMI with others.
-<img width="752" height="311" alt="image" src="https://github.com/user-attachments/assets/2db1b6f7-0a1e-4e45-bb7a-20c9d30f8624" />
+<img width="752" height="411" alt="image" src="https://github.com/user-attachments/assets/2db1b6f7-0a1e-4e45-bb7a-20c9d30f8624" />
 
 ---
 
@@ -97,7 +97,7 @@ The service uses a pipeline approach to solve these issues:
 3.  **Distribution Configuration:** Defines where the final image should be sent (specific AWS Regions and Accounts).
 4.  **Schedule:** Automates when the pipeline runs (e.g., weekly or whenever the source image updates).
 5.  **Cascading Pipelines:** You can chain pipelines together. for example, a "Base Security Pipeline" produces a secured image, which then triggers a "Web Server Pipeline" and a "Database Pipeline" to add workload-specific software.
-<img width="1063" height="315" alt="image" src="https://github.com/user-attachments/assets/1766a7e8-367a-44b5-8760-1c2ec7cbe14d" />
+<img width="1063" height="715" alt="image" src="https://github.com/user-attachments/assets/1766a7e8-367a-44b5-8760-1c2ec7cbe14d" />
 
 ---
 
