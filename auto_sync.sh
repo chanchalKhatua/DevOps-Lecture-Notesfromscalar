@@ -1,5 +1,5 @@
 #!/bin/bash
-
+git pull origin main
 # Navigate to the folder
 # Add changes to Git
 git add .
