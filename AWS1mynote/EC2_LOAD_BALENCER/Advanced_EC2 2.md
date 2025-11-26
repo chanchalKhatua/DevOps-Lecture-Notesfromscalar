@@ -107,6 +107,8 @@ Load balancers distribute incoming traffic across multiple targets to ensure app
 ### Application Load Balancer (ALB)
 * **Layer:** Operates at **Layer 7** (Application Layer - HTTP/HTTPS).
 * **Routing:** Supports advanced routing based on content, such as **Path-based routing** (e.g., `/images`, `/api`) and **Host-based routing** (e.g., `api.example.com`).
+   <img width="816" height="397" alt="image" src="https://github.com/user-attachments/assets/24bd06a5-7b78-4db8-860e-b022c716cf82" />
+
 * **Target Groups:** Can route to EC2 instances, IP addresses, and Lambda functions.
 * **Key Features:**
     * **Stickiness:** Uses application cookies to bind a user session to a specific server.
