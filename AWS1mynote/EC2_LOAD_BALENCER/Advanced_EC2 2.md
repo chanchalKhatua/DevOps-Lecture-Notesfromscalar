@@ -107,6 +107,7 @@ Load balancers distribute incoming traffic across multiple targets to ensure app
 ### Application Load Balancer (ALB)
 * **Layer:** Operates at **Layer 7** (Application Layer - HTTP/HTTPS).
 * **Routing:** Supports advanced routing based on content, such as **Path-based routing** (e.g., `/images`, `/api`) and **Host-based routing** (e.g., `api.example.com`).
+  
    <img width="816" height="397" alt="image" src="https://github.com/user-attachments/assets/24bd06a5-7b78-4db8-860e-b022c716cf82" />
 
 * **Target Groups:** Can route to EC2 instances, IP addresses, and Lambda functions.
@@ -115,9 +116,84 @@ Load balancers distribute incoming traffic across multiple targets to ensure app
     * **Microservices:** Ideal for container-based applications (ECS/EKS).
     * **redirects:** Can handle HTTP to HTTPS redirects and fixed responses.
 
+## 🟩 **1. ALB Application Cookie Stickiness**
+
+### **Typical diagram**
+
+* Client → ALB
+* ALB returns a special cookie, e.g., `AWSALB`.
+* All future requests from the same client go to the same backend instance.
+<img width="821" height="339" alt="image" src="https://github.com/user-attachments/assets/fb71daf1-728f-431c-aa49-455dd949b09a" />
+
+  
+### **Meaning**
+
+* Stickiness = “Same user → Same server”
+* Good for apps needing login session on a specific instance.
+* Uses:
+
+  * E-commerce
+  * Banking apps
+  * Shopping carts
+
+ALB stores session information using its cookie (duration configurable).
+
+---
+
+## 🟦 **2. ALB as a Target of NLB**
+
+### **Diagram shows**
+
+* Internet → **Network Load Balancer (NLB)**
+* NLB → **ALB**
+* ALB → **Target groups / EC2 / ECS etc.**
+
+### **Meaning**
+
+* NLB runs at **Layer 4** (TCP/UDP).
+* ALB runs at **Layer 7** (HTTP/HTTPS).
+  
+<img width="820" height="371" alt="image" src="https://github.com/user-attachments/assets/34596fa1-1deb-40d8-86c9-5037e35ece8e" />
+
+You chain them for use cases like:
+
+* **Static IP requirement** (NLB supports Elastic IPs)
+* **TLS pass-through** at NLB
+* Application-level routing done by ALB
+
+This is becoming common for microservices + on-prem + hybrid apps.
+
+---
+## 🟦 **7. Serverless ALB**
+
+### **Diagram usually includes**
+
+* Client → ALB
+* ALB → AWS Lambda functions
+* No EC2 or servers involved.
+
+### **Meaning**
+
+* ALB can trigger **Lambda** directly.
+* This allows serverless web apps:
+
+  * No servers needed.
+  * Pay only per request.
+  * Scaling is automatic.
+  <img width="829" height="415" alt="image" src="https://github.com/user-attachments/assets/f40bdfd0-9f8c-40c5-9f98-90b6062838ba" />
+
+Use cases:
+
+* APIs
+* Low-latency apps
+* Serverless websites
+  
+-
 ### Network Load Balancer (NLB)
 * **Layer:** Operates at **Layer 4** (Transport Layer - TCP/UDP/TLS).
 * **Performance:** Designed for ultra-high performance and low latency. Capable of handling millions of requests per second.
+  <img width="841" height="456" alt="image" src="https://github.com/user-attachments/assets/e124e302-34bb-4ff2-a7bb-a0836083147e" />
+
 * **Key Features:**
     * **Static IP:** Can provide a static IP address for the application.
     * **ALB as a Target:** An NLB can route traffic to an ALB. This architecture combines the static IP benefit of the NLB with the Layer 7 routing capabilities of the ALB.
