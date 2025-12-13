@@ -402,11 +402,3 @@ Avoid relying only on system-level checks.
   * Debugging
   * Traffic analysis
 
----
-
-If you want, I can also expand this into:
-
-* Visual diagrams (ASCII or image-ready)
-* CKAD/AWS Pro exam question sets
-* Interview questions based on each topic
-* Terraform or CloudFormation templates for ASG/ALB/NLB setup
