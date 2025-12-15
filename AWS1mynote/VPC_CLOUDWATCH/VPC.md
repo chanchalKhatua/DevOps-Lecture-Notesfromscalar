@@ -31,15 +31,21 @@ A subnet is a segment of the VPC's IP address range where resources are launched
 ## **2. Networking Components & Gateways**
 
 ### **Internet Gateway (IGW)**
+An Internet Gateway acts as a bridge between a VPC and the public internet, enabling bidirectional communication. It allows resources within a VPC—such as EC2 instances in public subnets—to be accessible from the internet and to initiate outbound connections to the internet. Resources must have public IP addresses to use the IGW for internet access, and the IGW does not modify the source IP address of the traffic. It is a highly available, fully managed service that is attached to a single VPC and supports both IPv4 and IPv6 traffic. There is no additional cost for having an IGW, but you are charged for outbound internet traffic.
+
 * **Function:** Enables communication between the VPC and the public internet.
 * **Characteristics:** Horizontally scaled, redundant, highly available.
 * **Role:** Provides a target for internet-bound traffic (`0.0.0.0/0`) in a public subnet's route table.
+  
 
 ### **NAT Gateway**
+NAT Gateway is designed to allow instances in private subnets to initiate outbound connections to the internet while preventing unsolicited inbound traffic from the internet. It translates the private IP addresses of instances in a private subnet to a public IP address (typically its own Elastic IP) before sending traffic to the internet. This translation ensures that external services cannot initiate connections to the private instances, enhancing security. A NAT Gateway only supports outbound traffic and is used for tasks like software updates or retrieving data from external sources. It is a managed service that must be created within a specific Availability Zone and is not shared across VPCs. However, it can be indirectly shared across VPCs using transit gateways or VPC peering, which can reduce costs and simplify management. Unlike the IGW, a NAT Gateway incurs charges based on its creation and usage, including data processing and number of connections. 
 * **Function:** Allows instances in a **Private Subnet** to initiate outbound connections to the internet (e.g., for updates) while preventing inbound connections.
 * **Deployment:** Must be launched in a **Public Subnet** and requires an Elastic IP (EIP).
 * **Benefit:** Managed service, highly available within its AZ, auto-scales bandwidth (up to 5 Gbps, bursting higher).
-
+---
+A key technical point is that a NAT Gateway relies on an Internet Gateway to reach the public internet. When a private instance sends traffic through the NAT Gateway, the NAT Gateway forwards the request to the Internet Gateway, which then routes it to the internet. The response is routed back through the NAT Gateway, which translates the source IP back to the original private IP before sending it to the instance. This dependency means that a route to the Internet Gateway must be configured in the route table of the public subnet where the NAT Gateway resides.
+---
 ### **Route Tables**
 * A set of rules (routes) that determine where network traffic from your subnet is directed.
 * **Constraint:** Every subnet must be associated with exactly one route table.
