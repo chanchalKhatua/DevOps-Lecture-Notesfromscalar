@@ -70,25 +70,77 @@ This is a key interview differentiation point, focusing on statefulness and leve
 ## **4. VPC Connectivity Options**
 
 ### **A. VPC Peering**
-* **Definition:** A networking connection between two VPCs that routes traffic using private IP addresses.
+* **Definition:** A VPC peering connection is a networking connection between two Virtual Private Clouds (VPCs) that enables private traffic routing between them using private IPv4 or IPv6 addresses, allowing instances in either VPC to communicate as if they were on the same network.
+---
+  <img width="820" height="422" alt="image" src="https://github.com/user-attachments/assets/24577b55-6548-48a9-b518-da50345964e1" />
+  
+---
 * **Key Features:** Direct network route, no gateway, traffic stays on the AWS network.
 * **Limitations (Critical for Interviews):**
     * **No Transitive Peering:** Cannot route traffic from VPC A to VPC C via VPC B.
     * **No Overlapping CIDRs:** VPCs must have unique IP ranges.
-    * **Scale:** Limited to 125 connections per VPC; managing a large "full mesh" is complex.
-* 
+    * **Scale:** Limited to 125 connections per VPC; managing a large "full mesh" is complex. 
 
 ### **B. AWS Transit Gateway (TGW)**
-* **Definition:** A centralized hub (cloud router) for connecting multiple VPCs, VPNs, and Direct Connect connections.
+* **Definition:** AWS Transit Gateway is a fully managed, highly scalable network transit hub provided by Amazon Web Services (AWS) that serves as a central point for connecting multiple Amazon Virtual Private Clouds (VPCs), on-premises networks, VPNs, Direct Connect connections, and other cloud networks.
+
+  ---
+  <img width="1058" height="576" alt="image" src="https://github.com/user-attachments/assets/d9e719ca-5e2b-4c43-8592-7f3a55ee445c" />
+  
+  ---
 * **Architecture:** Hub-and-spoke model.
 * **Advantage:** Supports **Transitive Routing**, simplifying network architecture at scale.
 * **Scale:** Connects thousands of VPCs with centralized control.
-* 
+
+### **C. Transit VPC**
+* **Definition:** A Transit VPC in AWS is a reference architecture that serves as a global network transit center, enabling connectivity between multiple, geographically dispersed Virtual Private Clouds (VPCs) and remote networks, such as on-premises data centers or partner networks.
+---
+<img width="881" height="577" alt="image" src="https://github.com/user-attachments/assets/d3ecde4e-1c1e-490c-8454-9737488c0af6" />
+
+---
+### Key Details
+* Central **hub VPC** with VPN/router appliances
+* Spoke VPCs connect via **IPsec VPN**
+* **BGP** enables dynamic route exchange
+* Supports **VPC-to-VPC**, **VPC-to-on-prem**, and **cross-region** connectivity
+* Typically deployed using **CloudFormation templates**
+---
+### Features
+* Hub-and-spoke topology
+* Dynamic routing (BGP)
+* Centralized routing and security control
+* Reduced number of network connections
+* Automated deployment support
+---
+### Advantages
+* Simplifies network architecture
+* Avoids full-mesh VPC peering
+* Centralized security and monitoring
+* Scales better than VPC peering
+* Flexible multi-region connectivity
+---
+
+### Limitations
+
+* Requires **EC2-based VPN appliance management**
+* Higher operational overhead
+* Manual scaling and high-availability setup
+* Lower performance compared to AWS-native services
+* Considered **legacy** compared to Transit Gateway
+---
+
+### Quick Interview Note
+
+> *Transit VPC is largely replaced by **AWS Transit Gateway**, which provides the same functionality as a fully managed service.*
+
 
 ### **C. AWS PrivateLink (Interface Endpoints)**
 * **Function:** Enables private access to AWS services (e.g., S3, DynamoDB) or services hosted by other AWS accounts without using public IPs and without traversing the public internet.
 * **Mechanism:** Creates an Elastic Network Interface (ENI) in your subnet that serves as an entry point to the service.
+ ---
+<img width="1190" height="579" alt="image" src="https://github.com/user-attachments/assets/6c43721e-897f-4940-8bfe-b8c9c325747b" />
 
+---
 ---
 
 ## **5. Hybrid Connectivity (On-Premises to Cloud)**
