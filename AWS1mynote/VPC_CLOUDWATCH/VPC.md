@@ -168,3 +168,176 @@ This is a key interview differentiation point, focusing on statefulness and leve
 | **Application Load Balancer (ALB)** | Layer 7 (HTTP/HTTPS) | Content-based routing (paths, hosts, headers), supports microservices, HTTP/2, gRPC. |
 | **Network Load Balancer (NLB)** | Layer 4 (TCP/UDP) | Extremely high performance, ultra-low latency, handling millions of requests/sec. Provides a **static IP address** per AZ. |
 | **Gateway Load Balancer (GWLB)** | Layer 3 (IP) | Deploying and managing third-party network virtual appliances (firewalls, IDS/IPS). Uses **GENEVE** protocol. |
+Below is a **clear, structured, and exam-ready explanation** of **VPC Endpoint types** and **when each is suitable**, with practical decision rules.
+
+---
+
+# VPC Endpoint Types
+
+AWS provides **two types of VPC Endpoints**:
+
+1. **Gateway Endpoint**
+2. **Interface Endpoint (AWS PrivateLink)**
+
+---
+
+## 1. Gateway Endpoint
+
+### What it is
+
+* A **route-table based** endpoint
+* Adds a route to AWS-managed **prefix lists**
+* **No ENIs**, no security groups
+
+### Supported services
+
+* **Amazon S3**
+* **Amazon DynamoDB**
+
+(Only these two — nothing else)
+
+---
+
+### When Gateway Endpoint is Suitable
+
+✔ Private access to **S3 or DynamoDB**
+✔ Want to avoid **NAT Gateway / Internet Gateway**
+✔ Need **zero cost** endpoint
+✔ Simple architecture
+
+Example:
+
+```
+EC2 (private subnet) → S3 (via AWS backbone)
+```
+
+---
+
+### When NOT Suitable
+
+✖ Access to any service other than S3/DynamoDB
+✖ Need security-group level control
+✖ Need on-premises access via VPN/DX
+
+---
+
+### Key Exam Points
+
+* Works at **route table level**
+* Automatically adds route:
+
+  ```
+  pl-xxxx → vpce-xxxx
+  ```
+* **Free**
+* No Private DNS
+
+---
+
+## 2. Interface Endpoint (PrivateLink)
+
+### What it is
+
+* Creates **Elastic Network Interfaces (ENIs)** in your subnet
+* Uses **Private DNS**
+* Protected by **Security Groups**
+
+### Supported services
+
+* Most AWS services:
+
+  * EC2 API
+  * SSM
+  * ECR
+  * CloudWatch
+  * Secrets Manager
+* **Custom services** (via Endpoint Service)
+
+---
+
+### When Interface Endpoint is Suitable
+
+✔ Private access to **AWS APIs**
+✔ Access services from **private subnet** without Internet
+✔ Fine-grained security via **security groups**
+✔ Cross-account or SaaS access
+
+Example:
+
+```
+EC2 → ENI (Private IP) → AWS service
+```
+
+---
+
+### When NOT Suitable
+
+✖ Accessing S3 or DynamoDB (Gateway is better)
+✖ Cost-sensitive, high-volume traffic
+✖ Want simple routing (interface is more complex)
+
+---
+
+### Key Exam Points
+
+* Uses **ENIs**
+* Requires **subnet selection**
+* Supports **Private DNS**
+* **Hourly + data processing cost**
+
+---
+
+## Gateway vs Interface (Comparison Table)
+
+| Feature         | Gateway Endpoint | Interface Endpoint |
+| --------------- | ---------------- | ------------------ |
+| Services        | S3, DynamoDB     | Most AWS services  |
+| Network method  | Route table      | ENIs               |
+| Security groups | ❌ No             | ✅ Yes              |
+| Cost            | Free             | Paid               |
+| Private DNS     | ❌ No             | ✅ Yes              |
+| On-prem access  | ❌ No             | ✅ Yes              |
+| Cross-account   | ❌ No             | ✅ Yes              |
+
+---
+
+## Decision Rule (Very Important)
+
+> **If the service is S3 or DynamoDB → Gateway Endpoint**
+> **Otherwise → Interface Endpoint**
+
+---
+
+## Real-World Scenarios
+
+### Scenario 1
+
+Private EC2 needs S3 access
+✔ **Gateway Endpoint**
+
+### Scenario 2
+
+Private EC2 needs Systems Manager
+✔ **Interface Endpoint**
+
+### Scenario 3
+
+Share internal API with another AWS account
+✔ **Endpoint Service + Interface Endpoint**
+
+### Scenario 4
+
+Eliminate NAT Gateway for AWS APIs
+✔ **Interface Endpoint**
+
+---
+
+## Common Exam Traps
+
+❌ Choosing Interface Endpoint for S3
+❌ Thinking Gateway Endpoint supports security groups
+❌ Assuming endpoints work automatically across all subnets
+
+---
+
+
