@@ -134,7 +134,7 @@ This is a key interview differentiation point, focusing on statefulness and leve
 > *Transit VPC is largely replaced by **AWS Transit Gateway**, which provides the same functionality as a fully managed service.*
 
 
-### **C. AWS PrivateLink (Interface Endpoints)**
+### **D. AWS PrivateLink (Interface Endpoints)**
 * **Function:** Enables private access to AWS services (e.g., S3, DynamoDB) or services hosted by other AWS accounts without using public IPs and without traversing the public internet.
 * **Mechanism:** Creates an Elastic Network Interface (ENI) in your subnet that serves as an entry point to the service.
  ---
@@ -160,7 +160,49 @@ This is a key interview differentiation point, focusing on statefulness and leve
 * **Authentication:** Supports Active Directory, Certificate-based, and SAML.
 
 ---
+---
 
+### VPG (Virtual Private Gateway) – AWS
+
+In **AWS**, **VPG** stands for **Virtual Private Gateway**.
+
+#### What it is
+
+A **Virtual Private Gateway** is the **AWS-side VPN endpoint** that enables a secure connection between:
+
+* Your **VPC**, and
+* Your **on-premises data center** or another network
+
+It is commonly used with:
+
+* **Site-to-Site VPN**
+* **AWS Direct Connect**
+
+#### Where it sits
+
+```
+On-Prem Network ── VPN / Direct Connect ── VPG ── VPC
+```
+
+#### Key points
+
+* Attached to **one VPC**
+* Acts as the **entry/exit point** for VPN traffic
+* Uses **IPsec tunnels**
+* Requires **route table updates** in the VPC
+* Alternative to **Transit Gateway** (TGW)
+
+#### VPG vs Transit Gateway
+
+| Feature     | VPG        | TGW                           |
+| ----------- | ---------- | ----------------------------- |
+| Scope       | Single VPC | Multiple VPCs                 |
+| Scalability | Limited    | Highly scalable               |
+| Use case    | Simple VPN | Hub-and-spoke, large networks |
+| Cost        | Lower      | Higher                        |
+
+---
+---
 ## **6. Load Balancing Types**
 
 | Load Balancer | Layer | Use Case & Key Features |
