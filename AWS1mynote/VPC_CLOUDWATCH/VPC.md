@@ -530,6 +530,190 @@ The role must allow:
 > **VPC Flow Logs capture network traffic metadata for monitoring and troubleshooting but do not inspect packet content or block traffic.**
 
 ---
+Below is a **clear, exam-ready and interview-ready explanation** of **Security Groups vs Network ACLs**, exactly at a **2–3 years experience** depth, with **practical scenarios and common traps**.
+
+---
+
+# Security Groups vs Network ACLs (AWS)
+
+## 1. Security Groups (SG)
+
+### What they are
+
+* **Virtual firewalls** for **EC2 instances / ENIs**
+* Control traffic **at instance level**
+
+### Key characteristics
+
+* **Stateful**
+* **Allow rules only**
+* Default: **deny all inbound, allow all outbound**
+* Automatically allows **return traffic**
+
+### Scope
+
+* Attached to:
+
+  * EC2 instances
+  * ENIs
+  * Load balancers
+
+### Example
+
+If you allow:
+
+```
+Inbound: TCP 80 from 0.0.0.0/0
+```
+
+Then:
+
+* Response traffic is **automatically allowed**
+* No outbound rule needed
+
+---
+
+## 2. Network ACLs (NACL)
+
+### What they are
+
+* **Subnet-level firewalls**
+* Control traffic **in and out of subnets**
+
+### Key characteristics
+
+* **Stateless**
+* **Allow and Deny rules**
+* Rules evaluated in **ascending order**
+* Default deny rule = **32767**
+
+### Scope
+
+* Associated with:
+
+  * Subnets (not instances)
+
+### Example
+
+If you allow:
+
+```
+Inbound: TCP 80
+```
+
+You must also allow:
+
+```
+Outbound: Ephemeral ports (1024–65535)
+```
+
+Otherwise traffic fails.
+
+---
+
+## 3. Side-by-Side Comparison (Very Important)
+
+| Feature          | Security Group       | Network ACL        |
+| ---------------- | -------------------- | ------------------ |
+| Level            | Instance / ENI       | Subnet             |
+| Stateful         | Yes                  | No                 |
+| Rules            | Allow only           | Allow & Deny       |
+| Rule order       | Not applicable       | Evaluated in order |
+| Default behavior | Implicit deny        | Explicit deny      |
+| Use case         | Application security | Network boundary   |
+
+---
+
+## 4. Traffic Flow Order (Interview Favorite)
+
+```
+Inbound Traffic
+   ↓
+Network ACL (Subnet level)
+   ↓
+Security Group (Instance level)
+   ↓
+EC2 Instance
+```
+
+Outbound traffic follows the **reverse path**.
+
+---
+
+## 5. Real-World Usage Pattern (2–3 YOE Expected)
+
+### Best practice
+
+* **Security Groups** → Primary security control
+* **NACLs** → Coarse-grained protection (optional)
+
+### Typical NACL use
+
+* Block known bad IP ranges
+* Enforce compliance rules
+* Add extra defense layer
+
+---
+
+## 6. Common Scaler / Exam Traps
+
+### Trap 1
+
+> “HTTP allowed but website not loading”
+
+✔ SG allows 80
+❌ NACL outbound not allowed
+
+---
+
+### Trap 2
+
+> “I added deny rule but traffic still works”
+
+Reason:
+
+* SG is stateful and allows response traffic
+
+---
+
+### Trap 3
+
+> “Rule added but not working”
+
+Reason:
+
+* NACL rule number higher than 32767
+* Wrong subnet association
+
+---
+
+## 7. Quick Interview Q&A
+
+### Q: Why NACLs need outbound rules?
+
+**A:** Because they are stateless; return traffic is treated as new traffic.
+
+---
+
+### Q: Can you block an IP using Security Groups?
+
+**A:** No, SGs do not support deny rules.
+
+---
+
+### Q: Which is evaluated first?
+
+**A:** NACL → Security Group.
+
+---
+
+## 8. One-Line Exam Summary
+
+> **Security Groups are stateful, instance-level firewalls with allow rules only, while Network ACLs are stateless, subnet-level firewalls with ordered allow and deny rules.**
+
+---
+
+
 
 
 
