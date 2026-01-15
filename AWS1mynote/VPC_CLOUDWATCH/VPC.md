@@ -381,5 +381,155 @@ Eliminate NAT Gateway for AWS APIs
 ❌ Assuming endpoints work automatically across all subnets
 
 ---
+## VPC Flow Logs — Exam & Interview–Ready Explanation (2–3 YOE)
+
+### What VPC Flow Logs Are
+
+**VPC Flow Logs** capture **IP traffic metadata** flowing **to and from** network interfaces in your VPC. They are used for **network visibility, troubleshooting, and security analysis**.
+
+They **do NOT** capture packet payloads—only metadata.
+
+---
+
+## Where You Can Enable Flow Logs
+
+You can create Flow Logs at three levels:
+
+1. **VPC level** – all traffic in the VPC
+2. **Subnet level** – traffic for all ENIs in a subnet
+3. **ENI level** – traffic for a specific network interface
+
+**Exam tip:** ENI-level is the most granular.
+
+---
+
+## What Traffic Is Logged
+
+You can choose one of the following:
+
+* **ACCEPT** – only allowed traffic
+* **REJECT** – only denied traffic
+* **ALL** – both allowed and denied (most common)
+
+---
+
+## Where Flow Logs Are Stored
+
+Flow Logs can be delivered to:
+
+* **CloudWatch Logs** (most used for troubleshooting)
+* **Amazon S3** (long-term storage, analytics)
+* **Kinesis Data Firehose** (advanced pipelines)
+
+---
+
+## Flow Log Record Format (Important)
+
+A typical log entry includes:
+
+* Source IP
+* Destination IP
+* Source port
+* Destination port
+* Protocol
+* Packets / bytes
+* **Action (ACCEPT / REJECT)**
+* Start & end time
+
+**Exam keyword:** `action = REJECT` is critical for debugging.
+
+---
+
+## What Flow Logs DO NOT Capture (Very Important)
+
+They do **NOT** capture:
+
+* Traffic to/from:
+
+  * Amazon DNS (169.254.169.253)
+  * Instance metadata (169.254.169.254)
+* DHCP traffic
+* ARP traffic
+* Traffic between instances using **localhost**
+* Packet payload or application data
+
+---
+
+## Common Use Cases (Interview Answers)
+
+### 1. Debugging Connectivity Issues
+
+* Why EC2 cannot be reached?
+* Is traffic being **REJECTED by SG or NACL**?
+
+### 2. Security & Auditing
+
+* Identify unauthorized access attempts
+* Detect port scanning
+
+### 3. Compliance & Forensics
+
+* Maintain network access logs
+
+---
+
+## Flow Logs vs Security Group vs NACL (Comparison)
+
+| Feature        | Flow Logs  | Security Group | NACL       |
+| -------------- | ---------- | -------------- | ---------- |
+| Purpose        | Monitoring | Allow/Deny     | Allow/Deny |
+| Stateful       | N/A        | Yes            | No         |
+| Blocks traffic | No         | Yes            | Yes        |
+| Logs traffic   | Yes        | No             | No         |
+
+---
+
+## How to Enable VPC Flow Logs (Console)
+
+### Step-by-step
+
+1. Go to **VPC → Your VPCs**
+2. Select your VPC
+3. Click **Actions → Create flow log**
+4. Configure:
+
+   * **Filter:** ALL
+   * **Destination:** CloudWatch Logs
+   * **Log group:** Create new
+   * **IAM Role:** Create or select role
+5. Click **Create flow log**
+
+---
+
+## IAM Permission Required
+
+The role must allow:
+
+* `logs:CreateLogStream`
+* `logs:PutLogEvents`
+
+---
+
+## Sample Interview Question & Answer
+
+**Q:** EC2 is unreachable even though SG allows traffic. How do you debug?
+**A:** Enable VPC Flow Logs and check for REJECT entries to determine whether traffic is being blocked by a NACL or route issue.
+
+---
+
+## When NOT to Use Flow Logs
+
+* Application-level debugging
+* Payload inspection
+* Real-time packet capture
+
+---
+
+## One-Line Exam Summary
+
+> **VPC Flow Logs capture network traffic metadata for monitoring and troubleshooting but do not inspect packet content or block traffic.**
+
+---
+
 
 
