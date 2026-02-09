@@ -18,12 +18,15 @@ To achieve full observability, you need to correlate three types of data :
 * **Detect**: Identify that an issue is occurring (via Alarms/Dashboards) .
 * **Investigate**: Analyze the root cause using Logs and Traces .
 * **Remediate**: Take action to resolve the issue (Automated actions or manual intervention) .
+  
+#### Observability vs. Monitoring
+While monitoring tells you **when** something is wrong (reactive), observability allows you to understand **why** it is wrong by inferring internal states from external outputs (proactive).
 
 ---
 
 ## 2. Amazon CloudWatch Architecture
 
-Amazon CloudWatch is a repository and monitoring service acting as the central nervous system for AWS observability. It collects data across AWS, hybrid, and on-premises environments .
+Amazon CloudWatch is a monitoring and observability service that provides data and actionable insights for AWS, hybrid, and on-premises applications and infrastructure resources. You can collect and track metrics, collect and monitor log files, and set alarms.
 
 ### Core Components
 
@@ -43,11 +46,28 @@ Amazon CloudWatch is a repository and monitoring service acting as the central n
 
 
 
+
 ---
 
 ## 3. Deep Dive: CloudWatch Metrics
 
-Metrics are the fundamental unit of monitoring in CloudWatch.
+CloudWatch Metrics are the fundamental monitoring unit, representing time-series data.
+### **Default vs. Custom Metrics**
+
+* **Default Metrics:** Automatically collected by AWS services (e.g., EC2 `CPUUtilization`, S3 `BucketSizeBytes`).
+
+  * **Frequency:** Standard collection is every **5 minutes**. Detailed monitoring (paid) offers **1-minute** intervals.
+
+
+  * **EC2 Blind Spot:** Default EC2 metrics are hypervisor-level. They **do not** include OS-level metrics like **Memory Usage** or **Disk Space Used**. To get these, you must   install the **CloudWatch Agent**.
+
+
+* **Custom Metrics:** Metrics defined and published by your applications.
+
+  * **Resolution:** Can be standard (1-minute) or high-resolution (down to **1 second**).
+
+
+  * **Dimensions:** You can assign up to 10 dimensions (key/value pairs) to uniquely identify a metric (e.g., `Server=Prod`, `Color=Blue
 
 ### Metric Configuration & Retention
 
@@ -65,6 +85,24 @@ Every metric is defined by:
 2. **Metric Name**: The specific element being measured (e.g., `CPUUtilization`) .
 3. **Dimensions**: Name/value pairs that uniquely identify a metric (e.g., `InstanceId=i-123...`). You can assign up to **10 dimensions** per metric .
 4. **Statistics**: Aggregations over a specific period, including **Average, Minimum, Maximum, Sum**, and Sample Count .
+
+---
+### **Practical Task: Publish Custom Metric (CLI)**
+
+To publish a custom metric named `ApplicationErrorCount` to the `Custom/Application` namespace with a value of `10` to trigger an alarm, use the following command:
+
+```bash
+aws cloudwatch put-metric-data \
+    --namespace Custom/Application \
+    --metric-name ApplicationErrorCount \
+    --value 10 \
+    --unit Count
+
+```
+
+* **Command:** `put-metric-data` is the API call used to ingest custom data.
+* **Namespace:** `Custom/Application` creates a new container for your metric to avoid cluttering AWS namespaces.
+* **Unit:** Specifying `Count` ensures the data is interpreted correctly by alarms.
 
 ---
 
