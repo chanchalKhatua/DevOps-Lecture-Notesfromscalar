@@ -233,18 +233,13 @@ Formerly CloudWatch Events, EventBridge is the evolution of serverless event bus
 
 | Tool | Purpose | Key Use Case |
 | --- | --- | --- |
-| **AWS X-Ray** | Distributed Tracing | Visualizing the request path across microservices to find latency bottlenecks.
-
-|
+| **AWS X-Ray** | Distributed Tracing | Visualizing the request path across microservices to find latency bottlenecks. |
 | **ServiceLens** | Unification | Merges Metrics, Logs, and Traces into one view (Service Map). |
-| **Contributor Insights** | High-Cardinality Analysis | Identifying "Top N" offenders (e.g., Top 10 IP addresses causing a traffic spike).
-
-|
+| **Contributor Insights** | High-Cardinality Analysis | Identifying "Top N" offenders (e.g., Top 10 IP addresses causing a traffic spike). |
 | **Synthetics** | Canary Testing | Running scriptable "canaries" to check your endpoints 24/7 from the outside. |
 | **RUM (Real User Monitoring)** | Client-Side Data | Collecting data from the actual user's browser/device (page load time, JS errors). |
-| **CloudWatch AIOps** | ML Insights | <br>**Automated Investigations** and **Intelligent Grouping** to correlate alerts and reduce MTTR.
+| **CloudWatch AIOps** | ML Insights | <br>**Automated Investigations** and **Intelligent Grouping** to correlate alerts and reduce MTTR. |
 
-|
  ---
 
 ## 9. Architecture & Cost: The "Build vs. Buy" Design
