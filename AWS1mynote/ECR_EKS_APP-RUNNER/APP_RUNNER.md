@@ -146,5 +146,34 @@ AWS App Runner is a fully managed service designed for simple web applications a
 ### Deployment Strategy
 
 App Runner utilizes **Blue/Green deployment** to ensure zero downtime. It spins up the new version (Green) alongside the active version (Blue), verifies health, and then switches traffic.
+### Challenges with AppRunner
+
+
+#### 1. Scaling Limitations
+
+The image explicitly highlights constraints that can hinder complex application growth:
+
+* **Concurrency Limits:** App Runner is limited to **25 concurrent instances**, which acts as a hard ceiling for scaling high-traffic applications.
+* **Lack of Control:** It offers less granular scaling controls compared to ECS.
+* **Fixed Thresholds:** You cannot set custom scaling metrics; you are bound by the service's fixed scaling thresholds.
+
+#### 2. Networking Constraints & VPC Issues
+
+The handwritten notes in the image link "Networking Constraints" directly to **VPC** (Virtual Private Cloud). The provided text expands on this significantly:
+
+* **Complex Inter-service Communication:** Communicating between services within a VPC is difficult without creating VPC endpoints.
+* **Public Exposure Risks:** Without proper configuration (like a NAT Gateway), applications might require public IPs. The text notes that relying on frequent IP changes by Amazon or allowing IPs like `0.0.0.0` can expose sensitive data and entire databases to the public internet, creating major security vulnerabilities.
+
+#### 3. Limited Customization (CPU & Memory)
+
+The handwritten annotation under "Limited Customization" shows a matrix of numbers:
+
+This refers to the **fixed CPU and Memory configurations**. Unlike ECS, where you can granularly define resources, App Runner forces you into specific, pre-defined tiers (e.g., 2 vCPU / 4 GB RAM). This rigidity makes it unsuitable for applications that have unique resource demands (e.g., high memory but low CPU).
+
+#### 4. When to Move to ECS
+
+* **Move to ECS when:** You need granular control over scaling, custom networking security (avoiding public IP exposure), or flexible resource provisioning that exceeds the fixed tier options of App Runner.
+
+---
 
 ---
