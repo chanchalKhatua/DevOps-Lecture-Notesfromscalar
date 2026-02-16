@@ -10,6 +10,7 @@ Amazon ECS is a container orchestration service that consists of several key com
 
 * **Task Definitions**: A blueprint or immutable specification that describes how a container should be launched. It defines the image, CPU, memory, ports, and volumes required.
 
+* **Images and ECR**: Images are stored in Amazon Elastic Container Registry (ECR). ECS pulls the container images from the registry to deploy them based on task definitions.
 
 * **Tasks**: These are running instances of a task definition within a cluster. Tasks are ephemeral and can be created or terminated based on application requirements.
 
