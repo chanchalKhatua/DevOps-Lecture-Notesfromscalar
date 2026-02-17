@@ -25,6 +25,8 @@ Amazon ECS is a container orchestration service that consists of several key com
 
 <img width="948" height="567" alt="image" src="https://github.com/user-attachments/assets/760a6f4c-fe20-4cd8-b67e-e39ebe40f3bd" />
 
+---
+<img width="1000" height="509" alt="image" src="https://github.com/user-attachments/assets/1e4c1b4e-1c5f-47a9-915d-4724921b9c61" />
 
 ---
 
