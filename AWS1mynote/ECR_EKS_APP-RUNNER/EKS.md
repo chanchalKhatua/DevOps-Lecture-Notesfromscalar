@@ -1,4 +1,3 @@
-Here are the comprehensive study notes focusing exclusively on **Amazon EKS**, incorporating diagrams, detailed explanations, and interview questions.
 
 # Comprehensive Study Notes: Amazon EKS (Elastic Kubernetes Service)
 
@@ -6,18 +5,17 @@ Here are the comprehensive study notes focusing exclusively on **Amazon EKS**, i
 
 **Amazon Elastic Kubernetes Service (EKS)** is a managed service that runs Kubernetes on AWS without needing to install, operate, or maintain your own Kubernetes control plane or nodes.
 
-* 
-**Upstream Compatible:** EKS runs "vanilla" Kubernetes and is certified conformant, meaning it supports all standard Kubernetes tools and plugins.
+* **Upstream Compatible:** EKS runs "vanilla" Kubernetes and is certified conformant, meaning it supports all standard Kubernetes tools and plugins.
 
 
-* 
-**Versioning:** It supports at least 6 versions of Kubernetes at any given time, allowing sufficient time for testing and upgrades.
+* **Versioning:** It supports at least 6 versions of Kubernetes at any given time, allowing sufficient time for testing and upgrades.
 
 
-* 
-**Reliability:** It is designed for high availability and security, automating critical tasks like patching and provisioning.
+* **Reliability:** It is designed for high availability and security, automating critical tasks like patching and provisioning.
 
+### ECS Limitations that EKS Solves
 
+<img width="1111" height="634" alt="image" src="https://github.com/user-attachments/assets/7f746daa-531f-46a9-9d44-20edafb699eb" />
 
 ---
 
