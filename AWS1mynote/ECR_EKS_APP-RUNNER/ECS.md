@@ -23,6 +23,7 @@ Amazon ECS is a container orchestration service that consists of several key com
 
 * **Namespace**: A logical boundary used for service discovery within AWS Cloud Map. It allows containers to connect via DNS or API calls without using hardcoded IPs.
 
+<img width="948" height="567" alt="image" src="https://github.com/user-attachments/assets/760a6f4c-fe20-4cd8-b67e-e39ebe40f3bd" />
 
 
 ---
