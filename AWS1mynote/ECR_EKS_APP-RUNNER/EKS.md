@@ -18,6 +18,9 @@
 <img width="1111" height="634" alt="image" src="https://github.com/user-attachments/assets/7f746daa-531f-46a9-9d44-20edafb699eb" />
 
 ---
+<img width="948" height="535" alt="image" src="https://github.com/user-attachments/assets/5da802ea-43fd-4273-87fd-4f7ee7d2103a" />
+
+---
 
 ## 2. EKS Architecture
 
@@ -29,24 +32,22 @@ The Control Plane runs in an **EKS-managed VPC** within an AWS account separate 
 
 **Key Components in the Control Plane:**
 
-* 
-**API Server Instances:** These act as the front-end for the Kubernetes control plane, exposing the API and processing RESTful requests.
+* **API Server Instances:** These act as the front-end for the Kubernetes control plane, exposing the API and processing RESTful requests.
 
 
-* 
-**etcd Instances:** A highly available key-value store that acts as the source of truth for all cluster data.
+* **etcd Instances:** A highly available key-value store that acts as the source of truth for all cluster data.
 
 
-* 
-**Network Load Balancer (NLB):** Routes external traffic to the API servers.
+* **Network Load Balancer (NLB):** Routes external traffic to the API servers.
 
 
-* 
-**Controller Manager:** Runs background processes like the Node Controller (monitors health) and Replication Controller (maintains pod counts).
+* **Controller Manager:** Runs background processes like the Node Controller (monitors health) and Replication Controller (maintains pod counts).
 
 
-* 
-**Scheduler:** Decides which node a newly created pod should run on based on resource requirements and constraints.
+* **Scheduler:** Decides which node a newly created pod should run on based on resource requirements and constraints.
+
+<img width="1403" height="912" alt="image" src="https://github.com/user-attachments/assets/e31afb6d-c856-4465-b5f5-1b2844501fe0" />
+
 
 
 
@@ -56,12 +57,12 @@ The Data Plane consists of the compute resources where your applications actuall
 
 **Key Components in the Data Plane:**
 
-* 
-**Worker Nodes:** EC2 instances that host the Pods (containers).
+* **Worker Nodes:** EC2 instances that host the Pods (containers).
 
 
-* 
-**Node Groups:** A logical collection of nodes that can be managed together (e.g., for scaling).
+* **Node Groups:** A logical collection of nodes that can be managed together (e.g., for scaling).
+  
+<img width="1247" height="714" alt="image" src="https://github.com/user-attachments/assets/0aa09587-e598-4ad9-a2f1-0239c67e91f4" />
 
 
 
