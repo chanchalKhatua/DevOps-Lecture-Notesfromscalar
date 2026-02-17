@@ -111,6 +111,8 @@ EKS offers flexible ways to manage the compute layer (Data Plane) depending on y
 
 * **Description:** A combination of EC2 and Fargate in the same cluster.
 * **Best For:** Mixed requirements where predictable workloads run on reserved EC2 instances and variable spikes are handled by Fargate.
+  
+<img width="948" height="554" alt="image" src="https://github.com/user-attachments/assets/4506d6e6-3d97-4125-bb90-f37f7f37eeec" />
 
 ---
 
