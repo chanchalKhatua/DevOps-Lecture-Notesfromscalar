@@ -76,18 +76,10 @@ Understanding the specific roles of components within the Control Plane and Work
 
 | Component | Function |
 | --- | --- |
-| **API Server** | Validates and configures data for API objects (pods, services, etc.) and processes all REST requests.
-
- |
-| **etcd** | Stores the entire cluster state. It requires careful backup planning as it is the single source of truth.
-
- |
-| **Scheduler** | Watches for unscheduled pods and assigns them to nodes based on resource availability and policies.
-
- |
-| **Controller Manager** | Manages the state of the cluster (e.g., bringing up new pods if some crash).
-
- |
+| **API Server** | Validates and configures data for API objects (pods, services, etc.) and processes all REST requests. |
+| **etcd** | Stores the entire cluster state. It requires careful backup planning as it is the single source of truth. |
+| **Scheduler** | Watches for unscheduled pods and assigns them to nodes based on resource availability and policies. |
+| **Controller Manager** | Manages the state of the cluster (e.g., bringing up new pods if some crash). |
 
 ### **Node Components** (The Muscle)
 
@@ -122,7 +114,74 @@ EKS offers flexible ways to manage the compute layer (Data Plane) depending on y
 
 ---
 
-## 5. Deployment Strategies & Tools
+## 4. **Self-Managed Worker Nodes** vs **Managed Node Groups** And Separation of **AWS Responsibility (🟠)** vs **Customer Responsibility (🔵)**
+
+
+### 🟠 AWS Responsibility (Always)
+
+### ✅ Control Plane (Fully Managed by AWS)
+
+* API Server
+* Scheduler
+* Controller Manager
+* etcd (cluster state store)
+* High Availability (Multi-AZ)
+* Control plane upgrades
+
+You **never manage master nodes** in EKS.
+
+---
+
+### 🔵 Self-Managed Workers
+
+You manage everything in the **data plane**:
+
+* OS patching
+* Kubelet & container runtime
+* AMI selection
+* Auto Scaling Groups
+* Node upgrades
+* Node lifecycle replacement
+
+⚠ High operational overhead.
+
+---
+<img width="948" height="377" alt="image" src="https://github.com/user-attachments/assets/f249ac7f-a327-44fa-aaf2-6e7bd6784705" />
+
+---
+
+### 🔵 Managed Node Groups
+
+AWS manages:
+
+* OS updates
+* AMI updates
+* Kubelet upgrades
+* Node lifecycle
+* Rolling node updates
+
+You manage:
+
+* Instance type selection
+* Min/Max scaling
+* Kubernetes configs (RBAC, policies, HPA, etc.)
+
+✅ Recommended for production.
+
+---
+
+# 🔥 Key Interview Differences
+
+| Feature              | Self-Managed | Managed Node Groups |
+| -------------------- | ------------ | ------------------- |
+| OS & Patching        | You          | AWS                 |
+| Node Upgrade         | You          | AWS                 |
+| Operational Overhead | High         | Low                 |
+| Production Ready     | Complex      | Preferred           |
+
+---
+
+## 6. Deployment Strategies & Tools
 
 How do you actually create and manage an EKS cluster?
 
@@ -132,7 +191,7 @@ How do you actually create and manage an EKS cluster?
 
 ---
 
-## 6. Kubernetes Object Hierarchy
+## 7. Kubernetes Object Hierarchy
 
 EKS manages a hierarchy of resources to organize your application.
 
@@ -143,7 +202,7 @@ EKS manages a hierarchy of resources to organize your application.
 
 ---
 
-## 7. When to Choose EKS?
+## 8. When to Choose EKS?
 
 You should choose EKS over simpler solutions (like ECS) when:
 
