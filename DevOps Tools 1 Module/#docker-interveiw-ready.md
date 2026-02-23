@@ -1,0 +1,495 @@
+# Docker Interview Questions and Answers (Basic to Advanced)
+
+This document contains a curated list of Docker interview questions, ranging from fundamental concepts to advanced topics. Each question is followed by a concise, yet comprehensive answer to help you prepare for your next interview.
+
+---
+
+## Table of Contents
+
+1. [Basic Level](#basic-level)
+2. [Intermediate Level](#intermediate-level)
+3. [Advanced Level](#advanced-level)
+
+---
+
+## Basic Level
+
+### 1. What is Docker and why is it used?
+**Answer:**  
+Docker is an open-source platform that automates the deployment, scaling, and management of applications inside lightweight, portable containers. Containers package an application with all its dependencies (libraries, binaries, configuration files) into a single unit that can run consistently across any environment (development, testing, production).  
+**Why use Docker?**  
+- **Consistency:** Eliminates "works on my machine" problems.  
+- **Isolation:** Applications run in isolated containers, avoiding conflicts.  
+- **Portability:** Can run on any system with Docker installed (Linux, Windows, macOS).  
+- **Efficiency:** Lightweight compared to virtual machines, sharing the host OS kernel.  
+- **Scalability:** Easy to replicate and orchestrate containers using tools like Docker Swarm or Kubernetes.
+
+---
+
+### 2. Explain the difference between a Docker image and a Docker container.
+**Answer:**  
+- **Image:** A read-only template with instructions for creating a container. It includes the application code, runtime, libraries, environment variables, and configuration files. Images are built from a Dockerfile and can be stored in a registry (e.g., Docker Hub).  
+- **Container:** A runnable instance of an image. When you start an image with `docker run`, it becomes a container with a writable layer on top of the image layers. Containers can be started, stopped, moved, and deleted.
+
+---
+
+### 3. Describe the Docker architecture: daemon, client, and registry.
+**Answer:**  
+Docker uses a client-server architecture:  
+- **Docker Daemon (`dockerd`):** The background service running on the host that manages Docker objects (images, containers, networks, volumes). It listens for Docker API requests.  
+- **Docker Client (`docker`):** The command-line tool that allows users to interact with the daemon via REST API. The client can communicate with one or more daemons.  
+- **Docker Registry:** A storage and distribution system for Docker images. The default public registry is Docker Hub. Registries can be private or self-hosted.
+
+---
+
+### 4. What are the basic Docker commands you know?
+**Answer:**  
+- `docker pull <image>` – Download an image from a registry.  
+- `docker run <image>` – Create and start a container from an image.  
+- `docker ps` – List running containers. Add `-a` to show all containers.  
+- `docker stop <container>` – Stop a running container.  
+- `docker rm <container>` – Remove a stopped container.  
+- `docker rmi <image>` – Remove an image.  
+- `docker build -t <tag> .` – Build an image from a Dockerfile in the current directory.  
+- `docker push <image>` – Upload an image to a registry.  
+- `docker exec -it <container> <command>` – Run a command in a running container (e.g., interactive shell).  
+- `docker logs <container>` – Fetch logs of a container.
+
+---
+
+### 5. How do you create a Dockerfile? Mention key instructions.
+**Answer:**  
+A Dockerfile is a text file with a series of instructions to build an image. Common instructions:  
+- `FROM` – Sets the base image.  
+- `RUN` – Executes commands during image build (e.g., install packages).  
+- `COPY` / `ADD` – Copy files from host to image. `ADD` can also handle remote URLs and tar extraction.  
+- `WORKDIR` – Sets the working directory for subsequent instructions.  
+- `EXPOSE` – Informs Docker that the container listens on specified ports (documentation only).  
+- `CMD` – Provides defaults for executing a container (can be overridden).  
+- `ENTRYPOINT` – Configures the container to run as an executable (harder to override).  
+- `ENV` – Sets environment variables.  
+
+Example:
+```dockerfile
+FROM alpine:latest
+RUN apk add --no-cache python3
+COPY app.py /app/
+WORKDIR /app
+CMD ["python3", "app.py"]
+```
+
+---
+
+### 6. What is Docker Compose and when would you use it?
+**Answer:**  
+Docker Compose is a tool for defining and running multi-container Docker applications. Using a YAML file (`docker-compose.yml`), you configure services, networks, and volumes. With a single command (`docker-compose up`), you can start all services together.  
+**Use cases:**  
+- Local development environments with multiple services (e.g., web server + database + cache).  
+- Simplifying complex container setups.  
+- Defining application stacks for testing or CI/CD.
+
+---
+
+### 7. Explain Docker volumes and bind mounts. What are their differences?
+**Answer:**  
+Both are used to persist data generated by and used by Docker containers.  
+- **Volumes:** Managed by Docker and stored in a part of the host filesystem (`/var/lib/docker/volumes/`). Volumes are the preferred mechanism for persisting data because they are completely managed by Docker, safe to back up, and can be shared among containers.  
+- **Bind mounts:** Map a host file or directory into a container. They rely on the host's filesystem structure. Useful for development (e.g., mounting source code for live updates), but less portable and may have permission issues.  
+
+Example bind mount: `docker run -v /host/path:/container/path ...`  
+Example volume: `docker run -v myvolume:/container/path ...`
+
+---
+
+### 8. How do you map a port from the host to a container?
+**Answer:**  
+Use the `-p` (or `--publish`) flag with `docker run`. Syntax: `-p host_port:container_port`.  
+Example: `docker run -p 8080:80 nginx` maps host port 8080 to container port 80. You can also specify IP: `-p 127.0.0.1:8080:80`.
+
+---
+
+### 9. How do you pass environment variables to a container?
+**Answer:**  
+- Using `-e` or `--env` flag: `docker run -e MY_VAR=value ...`  
+- Using an env file: `docker run --env-file myenv.list ...`  
+- In Docker Compose, under the `environment` key or `env_file`.
+
+---
+
+### 10. What is the difference between CMD and ENTRYPOINT in a Dockerfile?
+**Answer:**  
+- **ENTRYPOINT** defines the executable that will always run when the container starts. It is not easily overridden; command-line arguments to `docker run` are appended to the entrypoint.  
+- **CMD** provides default arguments for the entrypoint or can be used as the command if no entrypoint is set. It can be overridden by arguments passed to `docker run`.  
+
+Common pattern: Use ENTRYPOINT for the main command (e.g., `python`) and CMD for default arguments (e.g., `app.py`). Then, `docker run myimage` runs `python app.py`, while `docker run myimage other.py` runs `python other.py`.
+
+---
+
+## Intermediate Level
+
+### 11. What are multi-stage builds and why are they useful?
+**Answer:**  
+Multi-stage builds allow you to use multiple `FROM` statements in a single Dockerfile. Each stage can have a different base image. You selectively copy artifacts from one stage to another, discarding intermediate stages.  
+**Benefits:**  
+- **Smaller final images:** You can build and compile in a stage with all build tools, then copy only the compiled binary to a minimal runtime image (e.g., alpine).  
+- **Simpler Dockerfiles:** No need for complex scripts or multiple Dockerfiles.  
+- **Security:** The final image contains only what's necessary, reducing attack surface.
+
+Example:
+```dockerfile
+FROM golang:1.18 AS builder
+WORKDIR /app
+COPY . .
+RUN go build -o myapp .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /app/myapp /myapp
+CMD ["/myapp"]
+```
+
+---
+
+### 12. Explain Docker networking modes: bridge, host, none, overlay.
+**Answer:**  
+- **Bridge:** The default network driver. Containers on the same bridge network can communicate with each other; external access requires port mapping.  
+- **Host:** Removes network isolation, the container uses the host's network directly. Performance is better, but port conflicts may occur.  
+- **None:** The container has no network interfaces (except loopback). Useful for isolated tasks.  
+- **Overlay:** Used for multi-host networking, typically with Docker Swarm. It enables containers on different hosts to communicate securely.
+
+---
+
+### 13. How do you limit a container's resource usage (CPU, memory)?
+**Answer:**  
+Use flags with `docker run`:  
+- `--memory` or `-m`: Maximum memory (e.g., `-m 512m`).  
+- `--memory-reservation`: Soft limit.  
+- `--cpus`: Number of CPU cores (e.g., `--cpus=1.5`).  
+- `--cpu-shares`: Relative weight (default 1024).  
+- `--cpuset-cpus`: Bind to specific CPUs (e.g., `--cpuset-cpus=0,1`).  
+
+These can also be set in Docker Compose under `deploy.resources` (for swarm) or `resources` (for compose v3).
+
+---
+
+### 14. What are Docker health checks?
+**Answer:**  
+Health checks allow Docker to determine if a container is still working properly. You can define a `HEALTHCHECK` instruction in the Dockerfile or in Compose. Docker runs the specified command periodically (e.g., curl, pgrep) and updates the container's status to `healthy` or `unhealthy`. This is useful for orchestration tools to restart unhealthy containers or route traffic away.
+
+Example in Dockerfile:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -f http://localhost/ || exit 1
+```
+
+---
+
+### 15. How do you debug a container that exits immediately?
+**Answer:**  
+- Check logs: `docker logs <container>`  
+- Run the container interactively: `docker run -it <image> /bin/sh` to override the entrypoint/command.  
+- Inspect the container: `docker inspect <container>` to see exit code and other details.  
+- If the container starts and stops quickly, you can use `--entrypoint` to run a different command for debugging.  
+- For images, you can run a shell: `docker run -it --entrypoint sh <image>`.
+
+---
+
+### 16. What is the difference between COPY and ADD in a Dockerfile?
+**Answer:**  
+- **COPY** copies files/directories from the build context into the image. It's simple and transparent.  
+- **ADD** can do everything COPY does, plus it supports two additional features:  
+  - Fetch remote URLs (e.g., `ADD https://example.com/file.tar.gz /`)  
+  - Automatically extract tar archives (e.g., `ADD archive.tar.gz /dest/`)  
+
+Because of its extra magic, `ADD` can be unpredictable. Docker best practices recommend using `COPY` unless you specifically need the remote or extraction features.
+
+---
+
+### 17. How can you reduce the size of a Docker image?
+**Answer:**  
+- Use a smaller base image (e.g., `alpine` instead of `ubuntu`).  
+- Combine `RUN` commands to minimize layers (each instruction creates a layer).  
+- Clean up temporary files and package manager caches in the same layer (e.g., `apt-get clean`).  
+- Use multi-stage builds to discard build-time dependencies.  
+- Use `.dockerignore` to exclude unnecessary files from the build context.  
+- Consider distroless or scratch images for statically compiled binaries.
+
+---
+
+### 18. What is the purpose of a .dockerignore file?
+**Answer:**  
+The `.dockerignore` file (similar to `.gitignore`) specifies files and directories that should be excluded from the build context when running `docker build`. This speeds up builds (by sending less data to the daemon) and prevents sensitive or unnecessary files (like local configs, logs, or `.git` folder) from being copied into the image.
+
+---
+
+### 19. Explain the concept of image layering and layer caching.
+**Answer:**  
+A Docker image is composed of multiple read-only layers. Each instruction in a Dockerfile creates a new layer. When you rebuild an image, Docker caches each layer. If a layer hasn't changed (based on the instruction and context), Docker reuses the cached layer, speeding up builds.  
+**Caching rules:**  
+- After a layer changes, all subsequent layers are rebuilt (because they depend on it).  
+- COPY and ADD instructions trigger cache invalidation if the files have changed.  
+- To leverage caching effectively, order instructions from least to most frequently changing (e.g., install dependencies before copying source code).
+
+---
+
+### 20. How do you manage sensitive data (secrets) in Docker?
+**Answer:**  
+- **Build-time secrets:** Use `--secret` flag with `docker build` (BuildKit) to pass secrets without leaving them in the image.  
+- **Runtime secrets:**  
+  - Docker Swarm has built-in secret management (store and mount secrets securely).  
+  - Use environment variables (not recommended for production).  
+  - Mount secrets as files using bind mounts or volumes (ensure proper permissions).  
+  - Use external tools like HashiCorp Vault.  
+- Never hardcode secrets in Dockerfiles or images.
+
+---
+
+### 21. What is the difference between docker run and docker start?
+**Answer:**  
+- `docker run` creates a new container from an image and starts it. It combines `docker create` and `docker start`.  
+- `docker start` starts an existing, stopped container (without creating a new one). You can use `docker start -a` to attach to its output.
+
+---
+
+## Advanced Level
+
+### 22. Explain the underlying technologies Docker uses: namespaces, cgroups, union filesystems.
+**Answer:**  
+Docker leverages Linux kernel features for containerization:  
+- **Namespaces:** Provide isolation for processes, networking, filesystem mounts, IPC, UTS, and user IDs. Each container gets its own namespace, so processes inside think they have their own dedicated system.  
+- **cgroups (control groups):** Limit, account, and isolate resource usage (CPU, memory, disk I/O, network) for a group of processes.  
+- **Union filesystems (OverlayFS, AUFS, etc.):** Enable layering by combining multiple directories into a single view. This is how Docker images use layers; each layer is a filesystem diff, and the union mount presents them as one.
+
+---
+
+### 23. How does Docker differ from traditional virtualization (VMs)?
+**Answer:**  
+- **Architecture:** VMs include a full guest OS with a hypervisor managing hardware. Docker containers share the host OS kernel and run as isolated processes.  
+- **Resource usage:** Containers are lightweight (MBs vs GBs), start quickly (seconds vs minutes), and have less overhead.  
+- **Isolation:** VMs provide stronger isolation (separate kernel), while containers are process-level isolation (namespaces).  
+- **Portability:** Both are portable, but containers require the host to have a compatible kernel.
+
+---
+
+### 24. What is the role of containerd and runc in the Docker ecosystem?
+**Answer:**  
+Docker originally was a monolithic tool. Over time, it was broken down into components that follow the Open Container Initiative (OCI) standards:  
+- **runc:** A low-level container runtime that creates and runs containers according to the OCI specification. It's the reference implementation of OCI.  
+- **containerd:** A high-level container runtime that manages the complete container lifecycle (image transfer, storage, execution, supervision). It uses runc under the hood. Docker uses containerd for these tasks.  
+- Docker daemon (`dockerd`) still provides the user-facing interface, API, and features like volumes, networking, and build, but delegates container execution to containerd.
+
+---
+
+### 25. How do you perform live migration or checkpoint/restore of Docker containers?
+**Answer:**  
+Docker supports checkpoint and restore using CRIU (Checkpoint/Restore In Userspace). This allows you to freeze a container and save its state to disk, then restore it later (possibly on another host).  
+**Usage:**  
+- Enable experimental features in Docker.  
+- `docker checkpoint create <container> <checkpoint-name>`  
+- `docker start --checkpoint <checkpoint-name> <container>`  
+
+Note: This feature is not widely used in production due to limitations (shared resources, network connections, etc.). It's more common in research or specific HPC scenarios.
+
+---
+
+### 26. Explain Docker security best practices.
+**Answer:**  
+- **Run containers as non-root user:** Use `USER` in Dockerfile to avoid running as root inside the container.  
+- **Use read-only root filesystem:** Mount the root filesystem as read-only with `--read-only` and use volumes for writable data.  
+- **Limit capabilities:** Drop all Linux capabilities (`--cap-drop=ALL`) and add only needed ones.  
+- **Use seccomp, AppArmor, or SELinux profiles:** Restrict system calls.  
+- **Enable user namespace remapping:** Map the container's root user to a non-privileged user on the host.  
+- **Keep images small and updated:** Regularly scan for vulnerabilities (Docker Scout, Trivy).  
+- **Sign and verify images:** Use Docker Content Trust (DCT) to ensure image integrity.  
+- **Use secrets management:** Avoid passing secrets via environment variables; use Docker secrets or external vaults.  
+- **Network isolation:** Use custom networks and avoid the default bridge for production.
+
+---
+
+### 27. What is Docker BuildKit and why would you use it?
+**Answer:**  
+BuildKit is a modern build subsystem introduced in Docker. It improves build performance, storage management, and feature set.  
+**Benefits:**  
+- **Parallel builds:** Build independent stages concurrently.  
+- **Better caching:** More efficient layer caching and cache invalidation.  
+- **Secrets and SSH mounts:** Securely pass credentials during build without leaving traces.  
+- **Skip unused stages:** In multi-stage builds, only stages needed for target are built.  
+- **Output formats:** Can export build results in different formats (e.g., image, tar, rootfs).  
+
+Enable BuildKit by setting `DOCKER_BUILDKIT=1` environment variable or in daemon config.
+
+---
+
+### 28. How do you set up a private Docker registry and secure it?
+**Answer:**  
+You can run a private registry using the official `registry:2` image.  
+**Steps:**  
+1. Run registry container:  
+   `docker run -d -p 5000:5000 --name registry registry:2`  
+2. Tag and push images:  
+   `docker tag myapp localhost:5000/myapp`  
+   `docker push localhost:5000/myapp`  
+
+**Securing the registry:**  
+- Use TLS (HTTPS) with certificates.  
+- Add authentication (HTTP basic auth or token-based).  
+- Place behind a reverse proxy (Nginx) with SSL termination.  
+- Restrict access via firewall.  
+- For production, consider using cloud-managed registries (ECR, GCR, ACR) with built-in security.
+
+---
+
+### 29. Explain Docker swarm mode and its key features.
+**Answer:**  
+Docker Swarm is Docker's native clustering and orchestration solution. It turns a group of Docker hosts into a single virtual host.  
+**Key features:**  
+- **Declarative service model:** Define desired state (replicas, networks, volumes).  
+- **Scaling:** Easily scale services up/down.  
+- **Load balancing:** Distributes requests across service containers.  
+- **Rolling updates:** Update services with zero downtime.  
+- **Secret management:** Securely store and manage sensitive data.  
+- **Overlay networks:** Multi-host networking.  
+- **Self-healing:** Reschedules failed containers.  
+
+Swarm is simpler than Kubernetes but less feature-rich. It's suitable for smaller deployments.
+
+---
+
+### 30. How does Docker handle logging and how can you collect logs from containers?
+**Answer:**  
+Docker captures the standard output (stdout/stderr) of containers. By default, it uses the `json-file` logging driver, writing logs to files in `/var/lib/docker/containers/`.  
+**Logging drivers:** Docker supports multiple drivers:  
+- `json-file` (default)  
+- `syslog`  
+- `journald`  
+- `gelf` (Graylog)  
+- `fluentd`  
+- `awslogs` (CloudWatch)  
+- `splunk`  
+- `etwlogs` (Windows)  
+
+You can set the driver per container or globally. For production, it's common to forward logs to a centralized system (ELK, EFK, Datadog) using a logging driver or a sidecar container.
+
+---
+
+### 31. What is the difference between docker-compose and docker stack?
+**Answer:**  
+- **docker-compose** is a CLI tool for defining and running multi-container applications on a single Docker host. It uses a Compose file (v2 or v3) and is ideal for development.  
+- **docker stack** is a command within Docker Engine (swarm mode) to deploy an application stack to a swarm cluster. It uses Compose file v3 and handles multi-host deployment with features like secrets, configs, and replicated services.  
+
+docker-compose does not support swarm concepts like secrets or placement constraints unless you use the `docker stack deploy` command with a v3 file.
+
+---
+
+### 32. How do you troubleshoot Docker networking issues?
+**Answer:**  
+- Use `docker network ls` and `docker network inspect` to see network details.  
+- `docker exec` into a container and use tools like `ping`, `curl`, `nslookup` to test connectivity.  
+- Check firewall rules and SELinux/AppArmor if containers can't communicate.  
+- Verify port mappings with `docker port <container>`.  
+- Use `tcpdump` or Wireshark on the host for packet analysis.  
+- For overlay networks, ensure the required ports (7946 TCP/UDP for gossip, 4789 UDP for VXLAN) are open between swarm nodes.  
+- Check DNS resolution: containers use the embedded DNS server (127.0.0.11). Use `cat /etc/resolv.conf` inside container.
+
+---
+
+### 33. What is the role of the Docker API and how can you use it?
+**Answer:**  
+The Docker Engine exposes a REST API that the Docker CLI uses. You can interact directly with the API for automation, monitoring, or integration with other tools.  
+**Common endpoints:**  
+- `GET /containers/json` – List containers.  
+- `POST /containers/create` – Create a container.  
+- `POST /containers/{id}/start` – Start a container.  
+- `GET /images/json` – List images.  
+**Using the API:**  
+- Use `curl` or any HTTP client.  
+- For secure access, the daemon can be configured to listen on a TCP socket with TLS.  
+- SDKs exist for various languages (Go, Python, JavaScript, etc.).
+
+---
+
+### 34. Explain the concept of "rootless Docker" and its benefits.
+**Answer:**  
+Rootless mode allows running the Docker daemon and containers without root privileges. This reduces the risk of privilege escalation attacks.  
+**How it works:**  
+- Uses user namespaces to map the container's root user to an unprivileged user on the host.  
+- The daemon itself runs as a non-root user.  
+- Some features may be limited (e.g., binding to privileged ports <1024 requires extra configuration).  
+
+**Benefits:**  
+- Enhanced security; even if an attacker breaks out of a container, they don't gain root access on the host.  
+- Useful in multi-tenant environments where users shouldn't have root access.
+
+---
+
+### 35. How do you build multi-architecture Docker images?
+**Answer:**  
+Multi-architecture images allow a single image tag (e.g., `myapp:latest`) to run on different platforms (linux/amd64, linux/arm64, windows/amd64).  
+**Methods:**  
+- Use `docker buildx` (BuildKit) with QEMU emulation or native builders.  
+- Create a manifest list that references platform-specific images.  
+- Example with buildx:  
+  ```bash
+  docker buildx create --name mybuilder --use
+  docker buildx build --platform linux/amd64,linux/arm64 -t myuser/myapp:latest --push .
+  ```  
+- The registry stores a manifest list; Docker client pulls the appropriate image for its architecture.
+
+---
+
+### 36. What is the difference between Docker's "bridge" network and "overlay" network?
+**Answer:**  
+- **Bridge network:** Works on a single host. Containers on the same bridge can communicate via IP or container name (if using `--link` or user-defined bridge with automatic DNS). External access requires port publishing.  
+- **Overlay network:** Spans multiple hosts in a Swarm cluster. It creates a distributed network using VXLAN encapsulation, allowing containers on different hosts to communicate securely as if they were on the same network. Overlay networks also support load balancing and service discovery.
+
+---
+
+### 37. How do you ensure zero-downtime deployments with Docker?
+**Answer:**  
+Zero-downtime deployments require orchestration and strategies like rolling updates.  
+- **Using Docker Swarm:** Deploy a service with `--update-parallelism` and `--update-delay`. Swarm will replace containers one by one, only stopping an old container after the new one is healthy.  
+- **Using docker-compose with replicas:** In swarm mode, `docker stack deploy` performs rolling updates.  
+- **Using a load balancer:** Front your application with a reverse proxy (HAProxy, Nginx) that can detect when new containers are ready and route traffic accordingly.  
+- **Health checks:** Ensure new containers are healthy before receiving traffic.  
+- **Blue-green or canary deployments:** Use labels, separate services, or routing meshes to gradually shift traffic.
+
+---
+
+### 38. What is the Docker Content Trust (DCT) and how does it work?
+**Answer:**  
+Docker Content Trust (DCT) provides cryptographic signatures for images, ensuring their integrity and publisher authenticity. It is based on The Update Framework (TUF).  
+**How it works:**  
+- When DCT is enabled (`export DOCKER_CONTENT_TRUST=1`), `docker push` signs the image with a publisher's private key.  
+- `docker pull` verifies the signature using the public key (stored in a delegation role).  
+- It protects against tampering and ensures you're pulling an image from a trusted source.  
+- Images without a signature will be rejected when DCT is enabled.
+
+---
+
+### 39. Explain the purpose and usage of `docker save` and `docker load`.
+**Answer:**  
+- `docker save` exports one or more images to a tar archive (including all layers). Useful for backup or transferring images without a registry.  
+  Example: `docker save -o myimages.tar myapp:latest ubuntu:20.04`  
+- `docker load` imports images from a tar archive created by `save`.  
+  Example: `docker load -i myimages.tar`  
+
+These commands work with images, whereas `docker export` / `docker import` work with containers (flattened filesystem).
+
+---
+
+### 40. How do you configure the Docker daemon (dockerd) for production?
+**Answer:**  
+The daemon configuration is typically in `/etc/docker/daemon.json`. Important settings:  
+- **Logging:** Set logging driver (e.g., `"log-driver": "json-file"`, `"log-opts": {"max-size": "10m", "max-file": "3"}`).  
+- **Storage driver:** Set appropriate storage driver (overlay2 recommended).  
+- **Network:** Configure default address pools, MTU.  
+- **TLS:** Enable remote API with TLS (`"tls": true`, `"tlscert"`, `"tlskey"`).  
+- **Registry mirrors:** Add `"registry-mirrors"` for faster pulls.  
+- **User namespaces:** Enable `"userns-remap": "default"`.  
+- **Live restore:** Keep containers running if the daemon restarts: `"live-restore": true`.  
+- **Resource limits:** Set default ulimits.  
+
+After changes, restart the daemon: `systemctl restart docker`.
+
+---
+
+This collection covers a broad spectrum of Docker knowledge, from fundamental concepts to production-grade considerations. Use these questions to gauge your understanding and identify areas for further study. Good luck with your interview!
