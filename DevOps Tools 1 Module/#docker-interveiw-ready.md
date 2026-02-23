@@ -723,24 +723,48 @@ docker build --cache-from=myapp:latest -t myapp:latest .
 
 ---
 
-# 🎯 Optional High-Level System Design Question
 
-## 51. Design a production-ready Docker setup for a microservices application.
+---
 
-**Expected Answer Should Include:**
+### 51. What is the difference between a "dangling" image and an "unused" image, and how do you clean them up?
 
-* Reverse proxy (Nginx/Traefik)
-* Service discovery
-* Overlay networks
-* Secrets management
-* Health checks
-* Resource limits
-* Logging (ELK / CloudWatch)
-* Monitoring (Prometheus + Grafana)
-* Image scanning
-* Rolling updates
+**Answer:**
 
-This is a **senior-level DevOps question**.
+* **Dangling Image:** An image layer that has no relationship to any tagged images. It effectively has no name and no tag (shows as `<none>:<none>`). This usually happens when you rebuild an image with the same name and tag; the old image becomes dangling.
+* **Unused Image:** An image that has a name and a tag but is not currently being used by any running or stopped container.
+* **Cleanup:** * To remove only dangling images: `docker image prune`
+* To remove dangling *and* unused images: `docker image prune -a`
+* To clean up everything unused (containers, networks, images, and optionally volumes): `docker system prune`
+
+
+
+### 52. How does Docker handle Out of Memory (OOM) exceptions?
+
+**Answer:**
+If a container exhausts the memory allocated to it (or the host's memory if no limits are set), the Linux host kernel throws an `OOMException` and begins killing processes to free up memory.
+
+* **The Danger:** If the Docker daemon itself or other critical host processes are killed, the entire node can go down.
+* **The Solution:** Always set hard memory limits using the `-m` or `--memory` flag. You can also adjust the OOM priorities using `--oom-kill-disable` (use with extreme caution) or `--oom-score-adj` to ensure the host kills less critical containers first.
+
+### 53. What are Docker Contexts and why are they useful?
+
+**Answer:**
+Docker Contexts allow you to manage and easily switch between multiple Docker environments from a single Docker CLI.
+
+* **Why it’s useful:** A DevOps engineer might need to interact with a local Docker daemon, a remote staging server, and a production Docker Swarm cluster. Instead of constantly exporting `DOCKER_HOST` environment variables, you can configure contexts.
+* **Commands:** * `docker context create staging --docker "host=ssh://user@staging-server"`
+* `docker context use staging`
+* `docker context ls`
+
+
+
+### 54. What is the Docker SBOM and how do you generate it?
+
+**Answer:**
+An SBOM (Software Bill of Materials) is a nested inventory of all the open-source and third-party components used in your Docker image. It is critical for modern DevSecOps to track vulnerabilities and supply chain attacks (like Log4j).
+
+* **How to generate:** Docker introduced the `docker sbom` CLI command (powered by Syft).
+* **Example:** `docker sbom myapp:latest` will output a comprehensive list of all packages and libraries installed inside that container image.
 
 ---
 
