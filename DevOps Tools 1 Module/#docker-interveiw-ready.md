@@ -492,4 +492,256 @@ After changes, restart the daemon: `systemctl restart docker`.
 
 ---
 
-This collection covers a broad spectrum of Docker knowledge, from fundamental concepts to production-grade considerations. Use these questions to gauge your understanding and identify areas for further study. Good luck with your interview!
+# 🔥 Additional Docker Interview Questions (DevOps-Focused)
+
+---
+
+## 41. What happens internally when you run `docker run nginx`?
+
+**Answer:**
+
+When you execute:
+
+```bash
+docker run nginx
+```
+
+Docker performs the following steps:
+
+1. Checks if the image exists locally.
+2. If not, pulls the image from Docker Hub.
+3. Creates a writable container layer on top of image layers.
+4. Allocates namespaces (PID, NET, MNT, UTS, IPC, USER).
+5. Applies cgroups for resource control.
+6. Creates a network interface and assigns IP.
+7. Mounts volumes (if specified).
+8. Starts the container process using `containerd` → `runc`.
+9. Attaches stdout/stderr.
+
+This question tests **deep runtime understanding**.
+
+---
+
+## 42. What is the difference between ENTRYPOINT in shell form vs exec form?
+
+**Answer:**
+
+### Shell form:
+
+```dockerfile
+ENTRYPOINT python app.py
+```
+
+* Runs as: `/bin/sh -c "python app.py"`
+* Signals (SIGTERM, SIGINT) may not be forwarded properly.
+* Not recommended for production.
+
+### Exec form (recommended):
+
+```dockerfile
+ENTRYPOINT ["python", "app.py"]
+```
+
+* Directly runs the executable.
+* Proper signal handling.
+* Better for containerized applications.
+
+**Best Practice:** Always use exec form.
+
+---
+
+## 43. Why is PID 1 special inside containers?
+
+**Answer:**
+
+The first process inside a container becomes PID 1.
+
+Issues:
+
+* It does not handle signals properly by default.
+* It must reap zombie processes.
+* If it crashes → container exits.
+
+Solution:
+
+* Use `tini` or `--init`
+* Use proper signal handling in applications.
+
+Example:
+
+```bash
+docker run --init myapp
+```
+
+---
+
+## 44. What is the difference between `docker export` and `docker save`?
+
+**Answer:**
+
+| docker save                   | docker export               |
+| ----------------------------- | --------------------------- |
+| Works on images               | Works on containers         |
+| Preserves image layers        | Flattens filesystem         |
+| Keeps metadata                | Loses metadata              |
+| Used for registry-like backup | Used for simple FS transfer |
+
+This question tests understanding of image layering.
+
+---
+
+## 45. Explain Docker storage drivers and which one is recommended.
+
+**Answer:**
+
+Storage drivers manage image layers.
+
+Common drivers:
+
+* overlay2 (recommended)
+* aufs (deprecated)
+* devicemapper (legacy)
+* btrfs
+* zfs
+
+### Why overlay2?
+
+* Better performance
+* Stable
+* Default in modern Linux distributions
+
+Check driver:
+
+```bash
+docker info | grep Storage
+```
+
+---
+
+## 46. What are Docker capabilities? How do you secure containers using them?
+
+**Answer:**
+
+Linux capabilities divide root privileges into smaller units.
+
+Example capabilities:
+
+* NET_ADMIN
+* SYS_ADMIN
+* CHOWN
+* SETUID
+
+Secure container by dropping capabilities:
+
+```bash
+docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myapp
+```
+
+Principle: **Least privilege**.
+
+---
+
+## 47. Explain Docker restart policies.
+
+**Answer:**
+
+Restart policies control container behavior after failure.
+
+Options:
+
+* `no`
+* `on-failure`
+* `always`
+* `unless-stopped`
+
+Example:
+
+```bash
+docker run --restart=always nginx
+```
+
+Used in production for resiliency.
+
+---
+
+## 48. What is the difference between Docker Swarm and Kubernetes?
+
+**Answer:**
+
+| Docker Swarm            | Kubernetes        |
+| ----------------------- | ----------------- |
+| Native Docker           | Separate system   |
+| Easy to set up          | Complex           |
+| Limited features        | Enterprise-grade  |
+| Good for small clusters | Industry standard |
+
+For interviews: say
+
+> Swarm is simple and integrated, Kubernetes is powerful and widely adopted.
+
+---
+
+## 49. What is the difference between `ARG` and `ENV` in Dockerfile?
+
+**Answer:**
+
+| ARG                                  | ENV                         |
+| ------------------------------------ | --------------------------- |
+| Build-time variable                  | Runtime variable            |
+| Not available after build            | Available inside container  |
+| Can be overridden with `--build-arg` | Can be overridden with `-e` |
+
+Example:
+
+```dockerfile
+ARG VERSION=1.0
+ENV APP_ENV=production
+```
+
+---
+
+## 50. How do you optimize Docker builds in CI/CD pipelines?
+
+**Answer:**
+
+Best practices:
+
+* Use multi-stage builds
+* Use BuildKit
+* Use layer caching
+* Order Dockerfile correctly
+* Use `.dockerignore`
+* Use remote cache (`--cache-from`)
+* Push images with semantic tags (not only latest)
+* Scan images before pushing (Trivy)
+
+Example:
+
+```bash
+docker build --cache-from=myapp:latest -t myapp:latest .
+```
+
+---
+
+# 🎯 Optional High-Level System Design Question
+
+## 51. Design a production-ready Docker setup for a microservices application.
+
+**Expected Answer Should Include:**
+
+* Reverse proxy (Nginx/Traefik)
+* Service discovery
+* Overlay networks
+* Secrets management
+* Health checks
+* Resource limits
+* Logging (ELK / CloudWatch)
+* Monitoring (Prometheus + Grafana)
+* Image scanning
+* Rolling updates
+
+This is a **senior-level DevOps question**.
+
+---
+
+
