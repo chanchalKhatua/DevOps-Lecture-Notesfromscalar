@@ -258,6 +258,554 @@ Docker leverages Linux kernel features for containerization:
 - **Namespaces:** Provide isolation for processes, networking, filesystem mounts, IPC, UTS, and user IDs. Each container gets its own namespace, so processes inside think they have their own dedicated system.  
 - **cgroups (control groups):** Limit, account, and isolate resource usage (CPU, memory, disk I/O, network) for a group of processes.  
 - **Union filesystems (OverlayFS, AUFS, etc.):** Enable layering by combining multiple directories into a single view. This is how Docker images use layers; each layer is a filesystem diff, and the union mount presents them as one.
+  ## Union Filesystems in Container Runtimes (OverlayFS, AUFS)
+
+A **union filesystem** allows multiple directories (called *branches* or *layers*) to be mounted and presented as a **single coherent filesystem view**. This is fundamental to how container images (e.g., Docker images) implement **layered, copy-on-write (CoW)** storage.
+
+---
+
+## 1️⃣ Conceptual Model
+
+At runtime, a union filesystem merges:
+
+* **Lower layers (read-only)** → Base image layers
+* **Upper layer (read-write)** → Container-specific changes
+* **Work directory** → Required for internal bookkeeping (OverlayFS)
+
+The merged result is called the **merged mount point**.
+
+```
+LowerDir (image layers - RO)
+      ↓
+UpperDir (container layer - RW)
+      ↓
+MergedDir (what container sees)
+```
+
+---
+
+## 2️⃣ 🔹 OverlayFS (Modern Standard in Linux)
+
+![Image](https://www.researchgate.net/publication/261497570/figure/fig1/AS%3A464836237762560%401487837004771/Overlay-network-architecture.png)
+
+![Image](https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/images/overlay_constructs.jpg)
+
+![Image](https://docs.docker.com/engine/storage/drivers/images/overlay_constructs.webp)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1400/0%2AGOsYDHvQLrPT7X3P)
+
+### What it is
+
+**OverlayFS** is a Linux kernel-native union filesystem.
+Docker’s default storage driver on most modern Linux distributions is:
+
+```
+overlay2
+```
+
+### Directory Structure Example
+
+```bash
+/var/lib/docker/overlay2/
+```
+
+Each container uses:
+
+* `lowerdir` → image layers
+* `upperdir` → writable container layer
+* `workdir` → internal operation
+* `merged` → visible container filesystem
+
+### Mount Example
+
+```bash
+mount -t overlay overlay \
+  -o lowerdir=/lower,upperdir=/upper,workdir=/work \
+  /merged
+```
+
+---
+
+### 🔁 Copy-on-Write Behavior
+
+If a file exists in a lower layer:
+
+* Reading → served from lower layer
+* Modifying → copied to upper layer first
+* Deleting → a **whiteout file** is created in upper layer
+
+This preserves immutability of image layers.
+
+---
+
+### Why OverlayFS is Preferred
+
+| Feature                | Benefit                   |
+| ---------------------- | ------------------------- |
+| Kernel-native          | High performance          |
+| Simple design          | Lower overhead            |
+| Multi-lowerdir support | Enables `overlay2` driver |
+| Stable & maintained    | Production-ready          |
+
+---
+
+## 3️⃣ 🔹 AUFS (Advanced Union FS)
+
+![Image](https://miro.medium.com/0%2AqcB7YXqasZYLwMYc.jpg)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1070/0%2ADT6r31X4nlgHO0YI.jpg)
+
+![Image](https://docker-docs.uclv.cu/storage/storagedriver/images/sharing-layers.jpg)
+
+![Image](https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/images/aufs_delete.jpg)
+
+### What it is
+
+AUFS (Another Union File System) was an early union filesystem heavily used by Docker before OverlayFS matured.
+
+### Key Characteristics
+
+* Supports many writable branches
+* Complex but flexible
+* Not merged into mainline Linux kernel
+* Required external patches
+
+Because it wasn’t upstream in Linux, it became less preferred.
+
+---
+
+## 4️⃣ How Docker Uses Image Layers
+
+When you build a Docker image:
+
+```dockerfile
+FROM ubuntu
+RUN apt update
+RUN apt install nginx
+COPY . /app
+```
+
+Each instruction creates a **new layer**.
+
+Layer structure:
+
+```
+Layer 4 → COPY /app
+Layer 3 → install nginx
+Layer 2 → apt update
+Layer 1 → ubuntu base
+```
+
+Each layer is:
+
+* Immutable
+* Stored as filesystem diff
+* Content-addressable (by SHA256)
+
+At container start:
+
+* All image layers → lowerdirs
+* New container layer → upperdir
+* OverlayFS merges them
+
+---
+
+## 5️⃣ Whiteouts (Important for Interviews)
+
+When a file is deleted in a higher layer:
+
+* The lower file is not actually removed
+* A **whiteout file** is created in upperdir
+* OverlayFS hides the lower file
+
+This preserves image immutability.
+
+---
+
+## 6️⃣ Performance Characteristics
+
+| Operation             | Performance                    |
+| --------------------- | ------------------------------ |
+| Read from lower layer | Fast                           |
+| Write new file        | Fast                           |
+| Modify existing file  | Slight overhead (copy-up)      |
+| Deep layer chains     | May degrade lookup performance |
+
+This is why:
+
+* Docker limits layer count
+* `overlay2` improves performance over older drivers
+
+---
+
+## 7️⃣ OverlayFS vs AUFS (Interview Comparison)
+
+| Feature            | OverlayFS | AUFS                 |
+| ------------------ | --------- | -------------------- |
+| In mainline kernel | ✅ Yes     | ❌ No                 |
+| Complexity         | Simpler   | Complex              |
+| Performance        | High      | Good                 |
+| Maintenance        | Active    | Deprecated in Docker |
+| Default in Docker  | ✅ Yes     | ❌ No                 |
+
+---
+
+## 8️⃣ Why This Matters in DevOps
+
+Understanding union filesystems helps with:
+
+* Optimizing Dockerfiles (reduce layers)
+* Debugging disk usage in `/var/lib/docker`
+* Troubleshooting copy-on-write performance issues
+* Understanding image immutability
+* Analyzing container storage growth
+
+---
+# How `overlay2` Works Internally in `/var/lib/docker`
+
+When Docker uses the **`overlay2` storage driver**, it relies on **Linux OverlayFS** to implement image layering and container copy-on-write behavior.
+
+On a Linux host, Docker stores all layer data here:
+
+```bash
+/var/lib/docker/overlay2/
+```
+
+Let’s break this down structurally and operationally.
+
+---
+
+# 1️⃣ High-Level Architecture
+
+![Image](https://ravichaganti.com/images/image-layers-containers.png)
+
+![Image](https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/images/overlay_constructs.jpg)
+
+![Image](https://docs.docker.com/engine/storage/drivers/images/overlay_constructs.webp)
+
+![Image](https://docs.docker.com/engine/storage/drivers/images/sharing-layers.webp)
+
+OverlayFS combines:
+
+* **lowerdir** → read-only image layers
+* **upperdir** → writable container layer
+* **workdir** → internal overlay metadata
+* **merged** → final mount point visible inside container
+
+---
+
+# 2️⃣ Directory Layout Inside overlay2
+
+Run:
+
+```bash
+ls /var/lib/docker/overlay2/
+```
+
+You’ll see long hash-like directory names:
+
+```bash
+3a4b5c6d7e...
+8f9a0b1c2d...
+l/
+```
+
+Each long directory corresponds to **one layer**.
+
+---
+
+## 🔹 Example Layer Directory
+
+```bash
+/var/lib/docker/overlay2/<layer-id>/
+```
+
+Inside:
+
+```bash
+diff/
+link
+lower
+merged/
+work/
+```
+
+### Meaning of Each
+
+| Directory | Purpose                                   |
+| --------- | ----------------------------------------- |
+| `diff/`   | Actual filesystem contents of that layer  |
+| `lower`   | Pointer to parent layer(s)                |
+| `merged/` | Final unified mount (for containers only) |
+| `work/`   | Required for OverlayFS operations         |
+| `link`    | Shortened reference used internally       |
+
+---
+
+# 3️⃣ The `l/` Directory (Important Optimization)
+
+Inside:
+
+```bash
+/var/lib/docker/overlay2/l/
+```
+
+You’ll see short symbolic links like:
+
+```bash
+6Y5IM2XC7TSNIJZZFLJCS6I4I4 -> ../3a4b5c6d7e/diff
+```
+
+### Why this exists?
+
+OverlayFS has a **mount argument length limit**.
+If Docker passed full hash paths for many layers, it would exceed that limit.
+
+So Docker:
+
+* Creates short symlinks in `l/`
+* References those in the `lowerdir=` mount option
+
+This is a critical internal optimization.
+
+---
+
+# 4️⃣ Image Layer Chain Internals
+
+Each image layer stores its parent reference in:
+
+```bash
+lower
+```
+
+Example:
+
+```bash
+cat lower
+```
+
+Output:
+
+```bash
+l/ABC123:l/DEF456:l/GHI789
+```
+
+This means:
+
+```
+Top layer
+  ↓
+Parent layer
+  ↓
+Base layer
+```
+
+Docker builds a **chain of lowerdirs** in correct order.
+
+---
+
+# 5️⃣ Container Creation Internals
+
+When you start a container:
+
+Docker creates a **new writable layer**:
+
+```bash
+/var/lib/docker/overlay2/<container-layer-id>/
+```
+
+Inside:
+
+```bash
+diff/      # container writable changes
+merged/    # mounted rootfs
+work/      # overlay workdir
+lower      # references image layers
+```
+
+Then Docker mounts:
+
+```bash
+mount -t overlay overlay \
+  -o lowerdir=<image-layers>,\
+     upperdir=<container-diff>,\
+     workdir=<container-work> \
+  <container-merged>
+```
+
+---
+
+# 6️⃣ Copy-on-Write (Copy-Up) Mechanism
+
+Let’s say:
+
+* `/etc/nginx/nginx.conf` exists in image layer
+* Container modifies it
+
+### What happens?
+
+1. File exists in `lowerdir`
+2. OverlayFS copies file into `upperdir/diff/`
+3. Modification happens there
+4. Lower layer remains untouched
+
+This is called **copy-up**.
+
+---
+
+# 7️⃣ File Deletion (Whiteouts)
+
+If container deletes a file from lower layer:
+
+OverlayFS creates a **whiteout file** in upper layer:
+
+```bash
+.wh.filename
+```
+
+This hides the lower-layer file without deleting it.
+
+Important for image immutability.
+
+---
+
+# 8️⃣ Real Example Walkthrough
+
+Let’s say:
+
+```dockerfile
+FROM ubuntu
+RUN apt install nginx
+COPY app /app
+```
+
+Layer order:
+
+```
+Layer 3 → COPY
+Layer 2 → nginx install
+Layer 1 → ubuntu
+```
+
+Inside overlay2:
+
+```
+Layer1/diff/
+Layer2/diff/
+Layer3/diff/
+```
+
+Container adds:
+
+```
+ContainerLayer/diff/
+```
+
+OverlayFS mount stack:
+
+```
+upperdir = ContainerLayer/diff
+lowerdir = Layer3:Layer2:Layer1
+```
+
+Merged into:
+
+```
+ContainerLayer/merged/
+```
+
+That becomes container root filesystem (`/`).
+
+---
+
+# 9️⃣ Inspecting a Running Container
+
+Find container ID:
+
+```bash
+docker inspect <container-id>
+```
+
+Look for:
+
+```json
+"GraphDriver": {
+  "Name": "overlay2",
+  "Data": {
+    "LowerDir": "...",
+    "UpperDir": "...",
+    "WorkDir": "...",
+    "MergedDir": "..."
+  }
+}
+```
+
+You can directly explore those paths on host.
+
+---
+
+# 🔟 Why overlay2 Is Efficient
+
+### Storage Efficiency
+
+* Layers shared between containers
+* No duplication of unchanged files
+
+### Performance
+
+* Native kernel support
+* Multiple lowerdirs supported
+* Reduced inode exhaustion compared to older drivers
+
+---
+
+# ⚠️ Common Production Issues
+
+### 1. Disk Full in `/var/lib/docker`
+
+Cause:
+
+* Large container writable layers
+* Logs growing
+* No pruning
+
+### 2. XFS Without `ftype=1`
+
+OverlayFS requires:
+
+```bash
+xfs_info /dev/<device>
+```
+
+Must show:
+
+```bash
+ftype=1
+```
+
+Otherwise overlay2 won’t work properly.
+
+### 3. Heavy Write Workloads
+
+OverlayFS is optimized for:
+
+* Read-heavy workloads
+
+For heavy DB writes → use volumes instead.
+
+---
+
+# 1️⃣1️⃣ Interview-Level Explanation
+
+> The `overlay2` driver stores each Docker image layer as a separate directory under `/var/lib/docker/overlay2`. Each layer contains a `diff` directory with filesystem changes and a `lower` file referencing its parent layers. When a container starts, Docker mounts these layers using OverlayFS, combining read-only lower layers with a writable upper layer via copy-on-write semantics. The `merged` directory becomes the container’s root filesystem.
+
+---
+
+---
+
+## 🔟 Interview-Ready Summary
+
+> A union filesystem such as OverlayFS enables Docker to stack multiple immutable image layers and present them as a single filesystem using copy-on-write semantics. The image layers are mounted as read-only lower directories, while the container gets a writable upper directory. OverlayFS merges them dynamically, allowing efficient storage reuse and immutability.
 
 ---
 
