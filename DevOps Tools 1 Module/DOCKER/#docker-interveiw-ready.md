@@ -1151,7 +1151,8 @@ The daemon configuration is typically in `/etc/docker/daemon.json`. Important se
 - **Storage driver:** Set appropriate storage driver (overlay2 recommended).  
 - **Network:** Configure default address pools, MTU.  
 - **TLS:** Enable remote API with TLS (`"tls": true`, `"tlscert"`, `"tlskey"`).  
-- **Registry mirrors:** Add `"registry-mirrors"` for faster pulls.  
+- **Registry mirrors:** Add `"registry-mirrors"` for faster pulls. A registry mirror is a proxy/cache for Docker images.
+    Instead of pulling directly from Docker Hub every time, Docker pulls from a mirror.
 - **User namespaces:** Enable `"userns-remap": "default"`.  
 - **Live restore:** Keep containers running if the daemon restarts: `"live-restore": true`.  
 - **Resource limits:** Set default ulimits.  
