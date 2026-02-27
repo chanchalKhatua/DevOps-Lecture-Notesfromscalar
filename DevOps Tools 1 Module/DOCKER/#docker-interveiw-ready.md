@@ -258,13 +258,13 @@ Docker leverages Linux kernel features for containerization:
 - **Namespaces:** Provide isolation for processes, networking, filesystem mounts, IPC, UTS, and user IDs. Each container gets its own namespace, so processes inside think they have their own dedicated system.  
 - **cgroups (control groups):** Limit, account, and isolate resource usage (CPU, memory, disk I/O, network) for a group of processes.  
 - **Union filesystems (OverlayFS, AUFS, etc.):** Enable layering by combining multiple directories into a single view. This is how Docker images use layers; each layer is a filesystem diff, and the union mount presents them as one.
-  ## Union Filesystems in Container Runtimes (OverlayFS, AUFS)
+  #### Union Filesystems in Container Runtimes (OverlayFS, AUFS)
 
 A **union filesystem** allows multiple directories (called *branches* or *layers*) to be mounted and presented as a **single coherent filesystem view**. This is fundamental to how container images (e.g., Docker images) implement **layered, copy-on-write (CoW)** storage.
 
 ---
 
-## 1️⃣ Conceptual Model
+#### 1️⃣ Conceptual Model
 
 At runtime, a union filesystem merges:
 
@@ -284,7 +284,7 @@ MergedDir (what container sees)
 
 ---
 
-## 2️⃣ 🔹 OverlayFS (Modern Standard in Linux)
+#### 2️⃣ 🔹 OverlayFS (Modern Standard in Linux)
 
 ![Image](https://www.researchgate.net/publication/261497570/figure/fig1/AS%3A464836237762560%401487837004771/Overlay-network-architecture.png)
 
@@ -294,7 +294,7 @@ MergedDir (what container sees)
 
 ![Image](https://miro.medium.com/v2/resize%3Afit%3A1400/0%2AGOsYDHvQLrPT7X3P)
 
-### What it is
+#### What it is
 
 **OverlayFS** is a Linux kernel-native union filesystem.
 Docker’s default storage driver on most modern Linux distributions is:
@@ -303,7 +303,7 @@ Docker’s default storage driver on most modern Linux distributions is:
 overlay2
 ```
 
-### Directory Structure Example
+#### Directory Structure Example
 
 ```bash
 /var/lib/docker/overlay2/
@@ -316,7 +316,7 @@ Each container uses:
 * `workdir` → internal operation
 * `merged` → visible container filesystem
 
-### Mount Example
+#### Mount Example
 
 ```bash
 mount -t overlay overlay \
@@ -326,7 +326,7 @@ mount -t overlay overlay \
 
 ---
 
-### 🔁 Copy-on-Write Behavior
+#### 🔁 Copy-on-Write Behavior
 
 If a file exists in a lower layer:
 
@@ -338,7 +338,7 @@ This preserves immutability of image layers.
 
 ---
 
-### Why OverlayFS is Preferred
+#### Why OverlayFS is Preferred
 
 | Feature                | Benefit                   |
 | ---------------------- | ------------------------- |
@@ -349,7 +349,7 @@ This preserves immutability of image layers.
 
 ---
 
-## 3️⃣ 🔹 AUFS (Advanced Union FS)
+#### 3️⃣ 🔹 AUFS (Advanced Union FS)
 
 ![Image](https://miro.medium.com/0%2AqcB7YXqasZYLwMYc.jpg)
 
@@ -359,7 +359,7 @@ This preserves immutability of image layers.
 
 ![Image](https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/images/aufs_delete.jpg)
 
-### What it is
+#### What it is
 
 AUFS (Another Union File System) was an early union filesystem heavily used by Docker before OverlayFS matured.
 
@@ -374,7 +374,7 @@ Because it wasn’t upstream in Linux, it became less preferred.
 
 ---
 
-## 4️⃣ How Docker Uses Image Layers
+#### 4️⃣ How Docker Uses Image Layers
 
 When you build a Docker image:
 
@@ -410,7 +410,7 @@ At container start:
 
 ---
 
-## 5️⃣ Whiteouts (Important for Interviews)
+#### 5️⃣ Whiteouts (Important for Interviews)
 
 When a file is deleted in a higher layer:
 
@@ -422,7 +422,7 @@ This preserves image immutability.
 
 ---
 
-## 6️⃣ Performance Characteristics
+#### 6️⃣ Performance Characteristics
 
 | Operation             | Performance                    |
 | --------------------- | ------------------------------ |
@@ -438,7 +438,7 @@ This is why:
 
 ---
 
-## 7️⃣ OverlayFS vs AUFS (Interview Comparison)
+#### 7️⃣ OverlayFS vs AUFS (Interview Comparison)
 
 | Feature            | OverlayFS | AUFS                 |
 | ------------------ | --------- | -------------------- |
@@ -450,7 +450,7 @@ This is why:
 
 ---
 
-## 8️⃣ Why This Matters in DevOps
+#### 8️⃣ Why This Matters in DevOps
 
 Understanding union filesystems helps with:
 
@@ -461,7 +461,7 @@ Understanding union filesystems helps with:
 * Analyzing container storage growth
 
 ---
-# How `overlay2` Works Internally in `/var/lib/docker`
+#### How `overlay2` Works Internally in `/var/lib/docker`
 
 When Docker uses the **`overlay2` storage driver**, it relies on **Linux OverlayFS** to implement image layering and container copy-on-write behavior.
 
@@ -475,7 +475,7 @@ Let’s break this down structurally and operationally.
 
 ---
 
-# 1️⃣ High-Level Architecture
+#### 1️⃣ High-Level Architecture
 
 ![Image](https://ravichaganti.com/images/image-layers-containers.png)
 
@@ -494,7 +494,7 @@ OverlayFS combines:
 
 ---
 
-# 2️⃣ Directory Layout Inside overlay2
+#### 2️⃣ Directory Layout Inside overlay2
 
 Run:
 
@@ -514,7 +514,7 @@ Each long directory corresponds to **one layer**.
 
 ---
 
-## 🔹 Example Layer Directory
+####🔹 Example Layer Directory
 
 ```bash
 /var/lib/docker/overlay2/<layer-id>/
@@ -530,7 +530,7 @@ merged/
 work/
 ```
 
-### Meaning of Each
+#### Meaning of Each
 
 | Directory | Purpose                                   |
 | --------- | ----------------------------------------- |
@@ -542,7 +542,7 @@ work/
 
 ---
 
-# 3️⃣ The `l/` Directory (Important Optimization)
+#### 3️⃣ The `l/` Directory (Important Optimization)
 
 Inside:
 
@@ -556,7 +556,7 @@ You’ll see short symbolic links like:
 6Y5IM2XC7TSNIJZZFLJCS6I4I4 -> ../3a4b5c6d7e/diff
 ```
 
-### Why this exists?
+#### Why this exists?
 
 OverlayFS has a **mount argument length limit**.
 If Docker passed full hash paths for many layers, it would exceed that limit.
@@ -570,7 +570,7 @@ This is a critical internal optimization.
 
 ---
 
-# 4️⃣ Image Layer Chain Internals
+#### 4️⃣ Image Layer Chain Internals
 
 Each image layer stores its parent reference in:
 
@@ -604,7 +604,7 @@ Docker builds a **chain of lowerdirs** in correct order.
 
 ---
 
-# 5️⃣ Container Creation Internals
+#### 5️⃣ Container Creation Internals
 
 When you start a container:
 
@@ -635,14 +635,14 @@ mount -t overlay overlay \
 
 ---
 
-# 6️⃣ Copy-on-Write (Copy-Up) Mechanism
+#### 6️⃣ Copy-on-Write (Copy-Up) Mechanism
 
 Let’s say:
 
 * `/etc/nginx/nginx.conf` exists in image layer
 * Container modifies it
 
-### What happens?
+#### What happens?
 
 1. File exists in `lowerdir`
 2. OverlayFS copies file into `upperdir/diff/`
@@ -653,7 +653,7 @@ This is called **copy-up**.
 
 ---
 
-# 7️⃣ File Deletion (Whiteouts)
+#### 7️⃣ File Deletion (Whiteouts)
 
 If container deletes a file from lower layer:
 
@@ -669,7 +669,7 @@ Important for image immutability.
 
 ---
 
-# 8️⃣ Real Example Walkthrough
+#### 8️⃣ Real Example Walkthrough
 
 Let’s say:
 
@@ -718,7 +718,7 @@ That becomes container root filesystem (`/`).
 
 ---
 
-# 9️⃣ Inspecting a Running Container
+#### 9️⃣ Inspecting a Running Container
 
 Find container ID:
 
@@ -744,14 +744,14 @@ You can directly explore those paths on host.
 
 ---
 
-# 🔟 Why overlay2 Is Efficient
+#### 🔟 Why overlay2 Is Efficient
 
-### Storage Efficiency
+#### Storage Efficiency
 
 * Layers shared between containers
 * No duplication of unchanged files
 
-### Performance
+#### Performance
 
 * Native kernel support
 * Multiple lowerdirs supported
@@ -759,9 +759,9 @@ You can directly explore those paths on host.
 
 ---
 
-# ⚠️ Common Production Issues
+#### ⚠️ Common Production Issues
 
-### 1. Disk Full in `/var/lib/docker`
+#### 1. Disk Full in `/var/lib/docker`
 
 Cause:
 
@@ -769,7 +769,7 @@ Cause:
 * Logs growing
 * No pruning
 
-### 2. XFS Without `ftype=1`
+#### 2. XFS Without `ftype=1`
 
 OverlayFS requires:
 
@@ -785,7 +785,7 @@ ftype=1
 
 Otherwise overlay2 won’t work properly.
 
-### 3. Heavy Write Workloads
+#### 3. Heavy Write Workloads
 
 OverlayFS is optimized for:
 
@@ -924,7 +924,127 @@ You can set the driver per container or globally. For production, it's common to
 - **docker-compose** is a CLI tool for defining and running multi-container applications on a single Docker host. It uses a Compose file (v2 or v3) and is ideal for development.  
 - **docker stack** is a command within Docker Engine (swarm mode) to deploy an application stack to a swarm cluster. It uses Compose file v3 and handles multi-host deployment with features like secrets, configs, and replicated services.  
 
-docker-compose does not support swarm concepts like secrets or placement constraints unless you use the `docker stack deploy` command with a v3 file.
+Here is your **tight, interview-ready DevOps note** based on our discussion.
+
+---
+
+#### Docker Compose vs Docker Swarm vs Docker Stack
+
+#### 1️⃣ Docker Compose (`docker compose`)
+
+#### Definition
+
+CLI tool to define and run **multi-container applications on a single Docker host**.
+
+#### Use Case
+
+* Local development
+* Testing environments
+* Single-node deployments
+
+#### Key Characteristics
+
+* Manages **containers directly**
+* No clustering
+* No scheduler
+* No multi-host support
+* `deploy:` section is ignored
+* Limited secret support (not swarm-managed)
+
+#### Command
+
+```bash
+docker compose up -d
+```
+
+---
+
+### 2️⃣ Docker Swarm
+
+#### Definition
+
+Docker’s **native cluster orchestration system** (built into Docker Engine).
+
+#### Enables
+
+* Multi-node cluster (manager + worker)
+* Service abstraction
+* Replication
+* Rolling updates
+* Placement constraints
+* Overlay networking
+* Secrets & configs
+* Internal load balancing (VIP)
+
+#### Enable Swarm
+
+```bash
+docker swarm init
+```
+
+---
+
+#### 3️⃣ Docker Stack
+
+#### Definition
+
+CLI command used to **deploy a multi-service application into a Swarm cluster**.
+
+#### Requirements
+
+* Swarm must be initialized
+* Compose file version 3+
+
+#### Command
+
+```bash
+docker stack deploy -c docker-compose.yml mystack
+```
+
+#### What It Creates
+
+* Swarm **services**
+* Overlay networks
+* Replicated tasks (containers)
+
+---
+
+#### Core Difference
+
+| Concept        | Meaning                           |
+| -------------- | --------------------------------- |
+| Docker Compose | Single-host container management  |
+| Docker Swarm   | Cluster orchestration system      |
+| Docker Stack   | Application deployed inside Swarm |
+
+---
+
+#### Execution Hierarchy
+
+```
+Docker Engine
+  └── Swarm Mode
+        └── Stack
+              └── Services
+                    └── Tasks
+                          └── Containers
+```
+
+---
+
+#### Important Technical Clarification
+
+* `docker compose` can read v3 files.
+* But the `deploy:` section (replicas, placement, constraints, rolling updates) **only works with `docker stack deploy` in Swarm mode**.
+* Without Swarm, those fields are ignored.
+
+---
+
+#### One-Line Interview Answer
+
+> Docker Compose manages containers on a single host, Docker Swarm is the cluster orchestrator, and Docker Stack is how we deploy multi-service applications into a Swarm cluster.
+
+---
 
 ---
 
