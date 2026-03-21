@@ -1,4 +1,3 @@
----
 
 # 📘 Kubernetes Commands Cheat Sheet
 
