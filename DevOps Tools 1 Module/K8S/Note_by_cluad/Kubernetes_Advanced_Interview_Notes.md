@@ -28,6 +28,14 @@
 
 It is a **container orchestration platform** that automates the deployment, scaling, and operation of containerized applications across clusters of machines.
 
+### Declarative Model (Core Philosophy)
+
+Kubernetes follows a declarative model:
+- User defines desired state (via YAML)
+- Controllers continuously reconcile actual state to match desired state
+
+This reconciliation loop is the foundation of Kubernetes automation.
+
 ### Evolution of Deployment Strategies
 
 #### 1. **Physical Machines Era**
@@ -146,6 +154,15 @@ This architecture enables horizontal scaling of control plane components and hig
 ---
 
 ## Kubernetes Architecture Deep Dive
+### End-to-End Workflow (How Kubernetes Works)
+
+kubectl apply → API Server → etcd  
+→ Controller Manager detects change  
+→ Scheduler assigns node  
+→ kubelet creates pod  
+→ kube-proxy updates networking  
+
+This flow represents how desired state becomes actual running workloads.
 
 ### High-Level Architecture Overview
 
@@ -190,7 +207,15 @@ This architecture enables horizontal scaling of control plane components and hig
         │  (AWS, Azure, GCP)   │
         └──────────────────────┘
 ```
+### End-to-End Workflow (How Kubernetes Works)
 
+kubectl apply → API Server → etcd  
+→ Controller Manager detects change  
+→ Scheduler assigns node  
+→ kubelet creates pod  
+→ kube-proxy updates networking  
+
+This flow represents how desired state becomes actual running workloads.
 ### Cluster Topology Options
 
 #### **High Availability Control Plane (Production)**
@@ -273,7 +298,12 @@ API Request Flow:
 ### 2. **kube-scheduler**
 
 **Role**: Intelligent pod placement engine
+Scheduling Process:
+- Step 1: Filtering (Predicates) → find feasible nodes
+- Step 2: Scoring (Priorities) → select best node
 
+Note:
+- Scheduler does NOT create pods; it only assigns nodes to pods
 **How It Works**:
 ```
 Pod Scheduling Pipeline:
@@ -492,6 +522,12 @@ Note:
 - "Reads from followers may lag" applies to serializable reads
 - Kubernetes primarily relies on linearizable reads for correctness
 ```
+### Production Best Practices
+
+- Never run etcd on worker nodes
+- Always take regular snapshots (backup critical)
+- Use SSD storage for low latency and high performance
+- Keep odd number of nodes (3, 5, 7) for quorum
 
 **Interview Questions**:
 - Q: "What happens if 2 out of 3 etcd nodes fail?"  
@@ -1220,6 +1256,21 @@ spec:
   A: "All resources in namespace deleted (graceful termination). Pods get 30s default grace period. Finalizers can extend deletion."
 
 ---
+### Service vs Ingress
+
+Service:
+- Layer 4 (TCP/UDP)
+- Exposes pods internally or externally
+- Types: ClusterIP, NodePort, LoadBalancer
+
+Ingress:
+- Layer 7 (HTTP/HTTPS)
+- Provides routing based on host/path
+- Requires Ingress Controller (e.g., NGINX)
+
+Example:
+- Service → exposes app
+- Ingress → routes traffic to multiple services
 
 ### Replica Controllers & ReplicaSets
 
