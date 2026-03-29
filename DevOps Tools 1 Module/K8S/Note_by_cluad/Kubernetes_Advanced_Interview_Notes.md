@@ -955,8 +955,20 @@ All containers in pod share:
 
 Containers DON'T share:
 1. PID namespace (process isolation, ps can't see other container's processes)
+  - By default, containers in a pod have isolated PID namespaces
+  - They can share the PID namespace if `shareProcessNamespace: true` is enabled at the pod level
+  - When PID namespace is shared:
+    - Containers can see and interact with each other's processes (e.g., via `ps`, signals)
+    - Useful for sidecar patterns (e.g., debugging, monitoring agents)
 2. File system (except volumes)
-3. Resource isolation (limits apply to pod, not individual containers)
+3. Resource isolation 
+  - By default, resource requests and limits are defined per container
+  - Pod-level resource usage = sum of all containers
+
+ - Note:
+   Kubernetes v1.34 (beta) introduces pod-level resource specification (via feature gate),
+   allowing resource limits/requests to be defined for the entire pod.
+   However, container-level resources remain the standard and most widely used approach.
 ```
 
 **Pod Lifecycle States**:
