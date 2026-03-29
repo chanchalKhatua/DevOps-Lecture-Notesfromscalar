@@ -95,7 +95,13 @@ Service: Place Order
 - Enforces policies and quotas
 - Provides centralized management through API
 
-**Interview Angle**: "The control plane is stateless (except etcd), making the cluster resilient to control plane node failures."
+**Interview Angle**:
+- API server is stateless
+- Scheduler and controller manager are stateless but operate based on state stored in etcd
+- etcd acts as the single source of truth for the entire cluster
+
+Result:
+This architecture enables horizontal scaling of control plane components and high availability.
 
 ### 2. **Scalability (Horizontal Scaling)**
 **Problem**: How do we add more container capacity quickly?  
