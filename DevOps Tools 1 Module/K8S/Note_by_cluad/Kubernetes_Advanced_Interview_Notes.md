@@ -1077,9 +1077,19 @@ kubectl get events -n <namespace> --sort-by='.lastTimestamp'
    - Where most users create resources
 
 2. kube-system
-   - System components (etcd, API server, etc.) NOT here!
-   - kubelet, kube-proxy run on nodes, not in pods
-   - CoreDNS, metrics-server, ingress controller pods
+   - CoreDNS, kube-proxy (DaemonSet), metrics-server, ingress controller pods
+   - Contains system-level components required for cluster operation
+
+   Runtime behavior:
+   - kubelet runs as a system service on nodes (not a pod)
+   - kube-proxy runs as a DaemonSet pod on each node
+
+   Control Plane Placement:
+   - In kubeadm (self-hosted clusters):
+     - kube-apiserver, etcd, scheduler, controller-manager run as static pods in kube-system
+
+   - In managed clusters (EKS/GKE/AKS):
+     - Control plane is managed externally and not visible in kube-system
 
 3. kube-public
    - Readable by all users (authenticated and unauthenticated)
