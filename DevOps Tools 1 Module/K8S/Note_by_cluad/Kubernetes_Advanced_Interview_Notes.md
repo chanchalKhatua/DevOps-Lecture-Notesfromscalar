@@ -474,9 +474,23 @@ Read Flow:
 1. Client → Any Master (Leader or Follower)
 2. Immediate return (reads are not consensus)
 
-Consistency Level:
-- Strong consistency: Write must achieve quorum
-- Eventual consistency: Reads from followers may lag
+Consistency in etcd:
+
+- Writes:
+  - Strongly consistent (must achieve quorum)
+
+- Reads:
+  1. Linearizable Reads (Strong Consistency):
+     - Always return the latest committed data
+     - May involve leader coordination → higher latency
+
+  2. Serializable Reads:
+     - Faster, can be served by followers
+     - May return stale data (lag behind leader)
+
+Note:
+- "Reads from followers may lag" applies to serializable reads
+- Kubernetes primarily relies on linearizable reads for correctness
 ```
 
 **Interview Questions**:
@@ -787,10 +801,19 @@ Kube-Proxy Modes:
    │ (NAT happens transparently)                │
    └────────────────────────────────────────────┘
 
-   Limitations:
-   - iptables is linear (rules scale as O(n))
-   - High load can cause latency spike
-   - Debugging complex with many rules
+iptables Mode Characteristics:
+
+- Rule evaluation is linear per chain (O(n)), where n = number of rules/endpoints
+- Each packet traverses rules sequentially until a match is found
+
+kube-proxy Optimizations:
+- Uses jump chains to organize rules efficiently
+- Uses probabilistic load balancing (random selection) to distribute traffic across pods
+
+Limitations:
+- As number of services and endpoints increases, rule count grows → higher lookup latency
+- Under heavy load, large rule sets can cause latency spikes
+- Debugging becomes complex due to large and dynamic rule chains
 
 2. IPVS Mode (IP Virtual Server, better performance)
    ┌────────────────────────────────────┐
@@ -857,7 +880,10 @@ Workflow:
 
 - Q: "Why not use Services directly for all networking?"  
   A: "Services are cluster-internal. For external traffic, use Ingress or LoadBalancer service. Services don't provide external IP routing."
-
+- Q: "Why is IPVS preferred over iptables?"
+  A: "iptables processes rules linearly, so performance degrades as the number of services grows. IPVS uses a hash-based lookup with O(1) complexity, making it more          efficient for large-scale clusters."
+    - IPVS uses kernel-level load balancing with O(1) lookup.
+    - Better suited for high-scale, high-throughput environments.
 ---
 
 ### 3. **Container Runtime Interface (CRI)**
