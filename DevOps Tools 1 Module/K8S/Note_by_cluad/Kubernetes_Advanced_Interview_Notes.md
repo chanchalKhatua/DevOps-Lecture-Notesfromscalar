@@ -154,15 +154,6 @@ This architecture enables horizontal scaling of control plane components and hig
 ---
 
 ## Kubernetes Architecture Deep Dive
-### End-to-End Workflow (How Kubernetes Works)
-
-kubectl apply → API Server → etcd  
-→ Controller Manager detects change  
-→ Scheduler assigns node  
-→ kubelet creates pod  
-→ kube-proxy updates networking  
-
-This flow represents how desired state becomes actual running workloads.
 
 ### High-Level Architecture Overview
 
