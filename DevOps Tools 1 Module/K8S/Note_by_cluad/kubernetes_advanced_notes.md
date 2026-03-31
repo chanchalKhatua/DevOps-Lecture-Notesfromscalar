@@ -89,12 +89,9 @@ spec:
     emptyDir: {}
 ```
 
-#### 2. **Ambassador Pattern**
-
-##### Concept
+####  2. **Ambassador Pattern**
 
 The **Ambassador Pattern** is a type of sidecar pattern where a helper container acts as a **proxy for outbound communication**.
-
 Instead of the application directly calling external services, it communicates with a **local proxy (ambassador container)** running in the same Pod.
 
 ---
