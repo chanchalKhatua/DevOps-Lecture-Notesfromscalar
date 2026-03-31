@@ -1,0 +1,2436 @@
+# Advanced Kubernetes Configuration & Observability - Interview Ready Notes
+
+## Table of Contents
+1. [Multi-Container Pods](#multi-container-pods)
+2. [Pod Replication & Scaling](#pod-replication--scaling)
+3. [Deployments](#deployments)
+4. [DaemonSets](#daemonsets)
+5. [Configuration Management](#configuration-management)
+6. [Resource Management](#resource-management)
+7. [Service Accounts & RBAC](#service-accounts--rbac)
+8. [Pod Scheduling & Placement](#pod-scheduling--placement)
+9. [Probes & Health Checks](#probes--health-checks)
+10. [Deployment Strategies](#deployment-strategies)
+
+---
+
+## Multi-Container Pods
+
+### Concepts
+
+**What is a Multi-Container Pod?**
+A pod containing multiple containers that share:
+- Network namespace (same IP address)
+- Storage volumes
+- Container lifecycle (all containers start/stop together)
+- Resource limits (shared across containers)
+
+### Use Cases
+
+#### 1. **Sidecar Pattern**
+Auxiliary container supporting the main application container.
+
+**Examples:**
+- Logging sidecar (log shipper to centralized logging)
+- Service mesh sidecar (Istio, Linkerd)
+- Monitoring agents (Prometheus exporters)
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-with-sidecar
+spec:
+  containers:
+  # Main application container
+  - name: myapp
+    image: myapp:1.0
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log/myapp
+
+  # Sidecar: Log shipper
+  - name: log-shipper
+    image: filebeat:latest
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log/myapp
+    env:
+    - name: ELASTICSEARCH_HOST
+      value: "elasticsearch.default.svc.cluster.local"
+
+  volumes:
+  - name: shared-logs
+    emptyDir: {}
+```
+
+#### 2. **Ambassador Pattern**
+Container acts as a proxy/gateway for the main application.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-with-ambassador
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    ports:
+    - containerPort: 3000
+    
+  - name: ambassador
+    image: envoy:latest
+    ports:
+    - containerPort: 8080
+    # Ambassador exposes port 8080 to outside
+    # Routes traffic to app on port 3000
+```
+
+#### 3. **Adapter Pattern**
+Transforms the interface or output of the main application.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-with-adapter
+spec:
+  containers:
+  - name: legacy-app
+    image: legacy-app:1.0
+    ports:
+    - containerPort: 8080
+    
+  - name: adapter
+    image: adapter:1.0
+    ports:
+    - containerPort: 9090
+    # Adapter translates old protocol to new protocol
+```
+
+### Interview Questions & Answers
+
+**Q: Can two containers in a pod have the same port?**
+A: No. While they share the network namespace (same IP), each port on that IP can only be used by one container. Attempting to bind the same port will cause a conflict.
+
+**Q: What happens if one container in a multi-container pod crashes?**
+A: The pod remains running, but only that container restarts. The other containers continue running. The pod itself doesn't restart (unless a controller like Deployment manages it).
+
+---
+
+## Pod Replication & Scaling
+
+### ReplicationController vs ReplicaSet
+
+| Feature | ReplicationController | ReplicaSet |
+|---------|----------------------|-----------|
+| API Version | `v1` | `apps/v1` |
+| Selector Type | Equality-based only (`app: myapp`) | Equality + Set-based (`In`, `NotIn`, `Exists`) |
+| Flexibility | Limited | More flexible |
+| Modern Use | Deprecated | Recommended |
+| Integration | Not used by Deployments | Used by Deployments |
+| Kubernetes Recommendation | Not recommended | Recommended |
+
+### ReplicationController
+
+**Purpose:** Ensures a specified number of identical pods are always running.
+
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: nginx-rc
+spec:
+  replicas: 3
+  selector:
+    app: nginx  # Simple equality selector
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+```
+
+### ReplicaSet
+
+**Purpose:** Modern replacement for ReplicationController with advanced selector support.
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+    matchExpressions:
+    - key: environment
+      operator: In
+      values:
+      - production
+      - staging
+    - key: team
+      operator: Exists
+  template:
+    metadata:
+      labels:
+        app: nginx
+        environment: production
+        team: backend
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+```
+
+### Set-Based Selectors Examples
+
+```yaml
+# Operator: In
+selector:
+  matchExpressions:
+  - key: environment
+    operator: In
+    values:
+    - production
+    - staging
+# Matches: environment=production OR environment=staging
+
+# Operator: NotIn
+selector:
+  matchExpressions:
+  - key: tier
+    operator: NotIn
+    values:
+    - frontend
+# Matches: Any pod where tier != frontend
+
+# Operator: Exists
+selector:
+  matchExpressions:
+  - key: release-version
+    operator: Exists
+# Matches: Any pod that has the "release-version" label (regardless of value)
+
+# Operator: DoesNotExist
+selector:
+  matchExpressions:
+  - key: unstable
+    operator: DoesNotExist
+# Matches: Any pod that doesn't have "unstable" label
+```
+
+### Scaling Commands
+
+```bash
+# Scale up to 5 replicas
+kubectl scale rs nginx-rs --replicas=5
+
+# Scale down to 2 replicas
+kubectl scale rs nginx-rs --replicas=2
+
+# Get replica set details
+kubectl get rs nginx-rs -o wide
+
+# Describe for detailed information
+kubectl describe rs nginx-rs
+
+# Edit and change replicas directly
+kubectl edit rs nginx-rs
+```
+
+### Interview Questions
+
+**Q: When should I use ReplicaSet directly vs Deployment?**
+A: Use Deployment in almost all cases. ReplicaSets are rarely used directly. Deployments provide rolling updates and rollback capabilities on top of ReplicaSets.
+
+**Q: How does ReplicaSet manage pods?**
+A: ReplicaSet uses selectors to identify pods it should manage. It continuously monitors the cluster and creates/deletes pods to maintain the desired replica count.
+
+---
+
+## Deployments
+
+### Why Use Deployments?
+
+| Feature | Value |
+|---------|-------|
+| Scaling | Easy scaling up/down |
+| Self-Healing | Automatically replaces failed pods |
+| Rolling Updates | Zero-downtime updates |
+| Rollbacks | Revert to previous versions |
+| Version Management | Maintains multiple ReplicaSet versions |
+
+### Deployment Architecture
+
+```
+Deployment
+    ↓
+ReplicaSet (v2) ← Current
+    ↓
+   Pods (3 replicas)
+
+ReplicaSet (v1) ← Previous
+    ↓
+   Pods (0 replicas - retained for rollback)
+```
+
+### Deployment YAML Structure
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 1 pod above desired count during update
+      maxUnavailable: 1  # 1 pod below desired count during update
+  
+  # Pod selector
+  selector:
+    matchLabels:
+      app: nginx
+  
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app: nginx
+      annotations:
+        prometheus.io/scrape: "true"
+    spec:
+      # Pod specs
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        
+        # Resource requests and limits
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        
+        # Probes for pod health
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        
+        # Volume mounts
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: shared-data
+          mountPath: /data
+      
+      # Volumes
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: shared-data
+        emptyDir: {}
+      
+      # Service account
+      serviceAccountName: nginx-sa
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33
+        fsGroup: 33
+```
+
+### Deployment Lifecycle
+
+```
+kubectl apply -f deployment.yaml
+        ↓
+Deployment created
+        ↓
+ReplicaSet created (v1)
+        ↓
+Pods created (3 replicas)
+        ↓
+Pods reach "Ready" state
+        ↓
+Deployment status: Available
+```
+
+### Common Deployment Operations
+
+```bash
+# Create deployment
+kubectl apply -f deployment.yaml
+
+# Get deployments
+kubectl get deployments
+
+# Describe deployment
+kubectl describe deployment nginx-deployment
+
+# Update image
+kubectl set image deployment/nginx-deployment nginx=nginx:1.22
+
+# Rollout status
+kubectl rollout status deployment/nginx-deployment
+
+# View rollout history
+kubectl rollout history deployment/nginx-deployment
+
+# Rollback to previous version
+kubectl rollout undo deployment/nginx-deployment
+
+# Rollback to specific revision
+kubectl rollout undo deployment/nginx-deployment --to-revision=2
+
+# Pause deployment (useful before making changes)
+kubectl rollout pause deployment/nginx-deployment
+
+# Resume deployment
+kubectl rollout resume deployment/nginx-deployment
+
+# Scale deployment
+kubectl scale deployment nginx-deployment --replicas=5
+
+# Edit deployment
+kubectl edit deployment nginx-deployment
+
+# Delete deployment
+kubectl delete deployment nginx-deployment
+```
+
+### Rolling Update Strategy Details
+
+**Example: maxSurge=2, maxUnavailable=1 with 3 replicas**
+
+```
+Initial State (3 pods):
+[Pod1] [Pod2] [Pod3]
+
+Step 1: Create 2 new pods (maxSurge=2)
+[Pod1] [Pod2] [Pod3] [New1] [New2]  ← 5 total
+
+Step 2: Delete 1 old pod (maxUnavailable=1)
+        [Pod2] [Pod3] [New1] [New2]  ← 4 total
+
+Step 3: Create 1 more new pod
+        [Pod2] [Pod3] [New1] [New2] [New3]  ← 5 total
+
+Step 4: Delete another old pod
+               [Pod3] [New1] [New2] [New3]  ← 4 total
+
+Step 5: Create 1 more new pod
+               [Pod3] [New1] [New2] [New3] [New4]  ← 5 total
+
+Step 6: Delete last old pod
+                     [New1] [New2] [New3] [New4]  ← 4 total
+
+Step 7: Delete extra pod
+                     [New1] [New2] [New3]  ← 3 total (desired)
+```
+
+### Interview Questions
+
+**Q: What's the difference between maxSurge and maxUnavailable?**
+A: 
+- `maxSurge`: Maximum number of pods that can exist ABOVE the desired replica count during an update. Allows faster updates by running old and new versions simultaneously.
+- `maxUnavailable`: Maximum number of pods that can be unavailable (not ready) during an update. Ensures minimum availability during updates.
+
+**Q: How does Deployment maintain history for rollbacks?**
+A: Deployment keeps old ReplicaSets in the cluster (with 0 replicas by default). The `.spec.revisionHistoryLimit` controls how many old ReplicaSets are retained. Rollback works by scaling the old ReplicaSet back up.
+
+**Q: What happens if I update the Deployment while a rolling update is in progress?**
+A: The previous rolling update is aborted and a new one begins with the new image/config.
+
+---
+
+## DaemonSets
+
+### Purpose
+Ensures a pod runs on EVERY node in the cluster (or nodes matching a selector).
+
+### Use Cases
+
+1. **Logging Agents**
+   - Fluentd, Filebeat on every node to collect logs
+   
+2. **Monitoring Agents**
+   - Prometheus Node Exporter, Datadog agent on every node
+   
+3. **Networking Components**
+   - Calico, Flannel networking daemons
+   - kube-proxy for service networking
+   
+4. **Security Agents**
+   - Falco for runtime security monitoring
+   - Host-level antivirus/security agents
+
+### DaemonSet Example
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: logging
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  
+  # Update strategy for DaemonSets
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  # One node at a time
+  
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      # Important: Allow scheduling on master nodes
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      
+      # Target only nodes with specific label
+      nodeSelector:
+        environment: production
+      
+      # High priority for system components
+      priorityClassName: system-node-critical
+      
+      hostNetwork: true
+      hostPID: true
+      
+      containers:
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:7.14.0
+        
+        env:
+        - name: ELASTICSEARCH_HOST
+          value: "elasticsearch.default.svc.cluster.local"
+        - name: ELASTICSEARCH_PORT
+          value: "9200"
+        
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: filebeat-config
+          mountPath: /etc/filebeat
+        
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+      
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: filebeat-config
+        configMap:
+          name: filebeat-config
+```
+
+### DaemonSet with Node Selector
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gpu-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: gpu-monitor
+  
+  template:
+    metadata:
+      labels:
+        app: gpu-monitor
+    spec:
+      # Only schedule on GPU nodes
+      nodeSelector:
+        accelerator: gpu
+        gpu-type: nvidia
+      
+      containers:
+      - name: gpu-monitor
+        image: nvidia/cuda:11.0
+        command: ["nvidia-smi", "query"]
+```
+
+### Common DaemonSet Operations
+
+```bash
+# Create DaemonSet
+kubectl apply -f daemonset.yaml
+
+# Get DaemonSets
+kubectl get daemonsets
+
+# Get pods managed by DaemonSet
+kubectl get pods -l app=filebeat
+
+# Describe DaemonSet
+kubectl describe daemonset filebeat
+
+# Edit DaemonSet
+kubectl edit daemonset filebeat
+
+# Delete DaemonSet (also deletes pods)
+kubectl delete daemonset filebeat
+
+# View DaemonSet status
+kubectl rollout status daemonset/filebeat
+```
+
+### Interview Questions
+
+**Q: Why might a DaemonSet pod not run on a node?**
+A: Common reasons:
+1. Node has taints that the pod doesn't tolerate
+2. Node selector labels don't match
+3. Node is in NotReady state
+4. Resource constraints (though less common for DaemonSets)
+
+**Q: How do you run DaemonSet pods on master/control-plane nodes?**
+A: Add tolerations for the master taint:
+```yaml
+tolerations:
+- key: node-role.kubernetes.io/master
+  effect: NoSchedule
+- key: node-role.kubernetes.io/control-plane
+  effect: NoSchedule
+```
+
+---
+
+## Configuration Management
+
+### ConfigMaps
+
+**Purpose:** Store non-sensitive configuration as key-value pairs.
+
+#### Creating ConfigMaps
+
+**Method 1: Literal Values**
+```bash
+kubectl create configmap app-config \
+  --from-literal=DATABASE_HOST=postgres.default.svc.cluster.local \
+  --from-literal=DATABASE_PORT=5432 \
+  --from-literal=APP_ENV=production
+```
+
+**Method 2: From File**
+```bash
+kubectl create configmap nginx-config --from-file=nginx.conf
+
+# Or from a directory
+kubectl create configmap configs --from-file=/path/to/config/dir
+```
+
+**Method 3: YAML Definition**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  # Simple key-value
+  APP_ENV: production
+  LOG_LEVEL: info
+  
+  # Multi-line configuration file
+  nginx.conf: |
+    worker_processes auto;
+    events {
+      worker_connections 1024;
+    }
+    http {
+      upstream backend {
+        server backend1:8080;
+        server backend2:8080;
+      }
+      server {
+        listen 80;
+        location / {
+          proxy_pass http://backend;
+        }
+      }
+    }
+  
+  # JSON configuration
+  app-settings.json: |
+    {
+      "database": {
+        "host": "postgres.default.svc.cluster.local",
+        "port": 5432,
+        "timeout": 30
+      },
+      "cache": {
+        "enabled": true,
+        "ttl": 3600
+      }
+    }
+```
+
+#### Using ConfigMaps in Pods
+
+**Method 1: Environment Variables**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-env
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    env:
+    # Single environment variable from ConfigMap
+    - name: DATABASE_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: DATABASE_HOST
+    
+    # Inject all ConfigMap keys as environment variables
+    envFrom:
+    - configMapRef:
+        name: app-config
+```
+
+**Method 2: Volume Mount**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-config-volume
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    volumeMounts:
+    - name: config
+      mountPath: /etc/config
+      readOnly: true
+  
+  volumes:
+  - name: config
+    configMap:
+      name: app-config
+      # Optional: Mount only specific keys
+      items:
+      - key: nginx.conf
+        path: nginx/nginx.conf
+      - key: app-settings.json
+        path: settings/app.json
+```
+
+### Secrets
+
+**Purpose:** Store sensitive data (base64 encoded at rest, but should be encrypted in etcd).
+
+#### Types of Secrets
+
+| Type | Use Case |
+|------|----------|
+| `Opaque` | Generic key-value pairs |
+| `kubernetes.io/dockercfg` | Legacy Docker authentication |
+| `kubernetes.io/dockerconfigjson` | Docker registry credentials |
+| `kubernetes.io/basic-auth` | Basic authentication |
+| `kubernetes.io/ssh-auth` | SSH authentication |
+| `kubernetes.io/tls` | TLS certificates |
+| `bootstrap.kubernetes.io/token` | Bootstrap tokens |
+
+#### Creating Secrets
+
+**Method 1: From Literals**
+```bash
+kubectl create secret generic db-credentials \
+  --from-literal=username=admin \
+  --from-literal=password=s3cr3tp@ssw0rd
+```
+
+**Method 2: From Files**
+```bash
+# Single file
+kubectl create secret generic tls-certs \
+  --from-file=tls.crt=/path/to/tls.crt \
+  --from-file=tls.key=/path/to/tls.key
+
+# Multiple files from directory
+kubectl create secret generic app-secrets --from-file=/path/to/secrets/
+```
+
+**Method 3: Docker Registry**
+```bash
+kubectl create secret docker-registry gcr-secret \
+  --docker-server=gcr.io \
+  --docker-username=_json_key \
+  --docker-password="$(cat /path/to/service-account-key.json)" \
+  --docker-email=user@example.com
+```
+
+**Method 4: TLS Secret**
+```bash
+kubectl create secret tls tls-secret \
+  --cert=path/to/tls.crt \
+  --key=path/to/tls.key
+```
+
+**Method 5: YAML Definition**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+data:
+  # Values must be base64-encoded
+  username: YWRtaW4=  # base64-encoded "admin"
+  password: cGFzc3dvcmQxMjM=  # base64-encoded "password123"
+  
+  # Or use stringData for automatic encoding
+stringData:
+  username: admin
+  password: password123
+```
+
+**TLS Secret**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tls-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTi... # base64-encoded certificate
+  tls.key: LS0tLS1CRUdJTi... # base64-encoded key
+```
+
+#### Using Secrets in Pods
+
+**Method 1: Environment Variables**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-secrets
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    env:
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: db-credentials
+          key: username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-credentials
+          key: password
+```
+
+**Method 2: Volume Mount**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-secret-volume
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    volumeMounts:
+    - name: secrets
+      mountPath: /etc/secrets
+      readOnly: true
+  
+  volumes:
+  - name: secrets
+    secret:
+      secretName: db-credentials
+      defaultMode: 0400  # Read-only for owner
+```
+
+**Method 3: ImagePullSecrets**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+spec:
+  containers:
+  - name: app
+    image: gcr.io/project/app:1.0
+  
+  imagePullSecrets:
+  - name: gcr-secret
+```
+
+### ConfigMap vs Secret Comparison
+
+| Aspect | ConfigMap | Secret |
+|--------|-----------|--------|
+| Data Encoding | Plain text | Base64 encoded |
+| Use Case | Non-sensitive config | Sensitive data |
+| Size Limit | 1MB | 1MB |
+| Mounted as Files | Yes | Yes |
+| Mounted as Env Vars | Yes | Yes |
+| etcd Encryption | Optional (recommended) | Recommended |
+| Security | Data visible in etcd | Requires additional security |
+
+### Interview Questions
+
+**Q: Is base64 encoding in Secrets sufficient for security?**
+A: No. Base64 is encoding, not encryption. Anyone with cluster access can decode it. Use:
+- etcd encryption at rest
+- Kubernetes audit logging
+- External secret management (HashiCorp Vault, AWS Secrets Manager)
+- RBAC to restrict secret access
+
+**Q: How do you rotate secrets?**
+A: 
+1. Create new secret with updated values
+2. Update pod specs to reference new secret
+3. Rolling update the deployment
+4. Delete old secret after grace period
+
+---
+
+## Resource Management
+
+### Resource Requests and Limits
+
+**Resource Requests:** Minimum resources guaranteed to a container.
+**Resource Limits:** Maximum resources a container can use.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-demo
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    
+    resources:
+      requests:
+        memory: "64Mi"      # Guaranteed minimum
+        cpu: "250m"         # Guaranteed minimum
+      limits:
+        memory: "128Mi"     # Maximum allowed
+        cpu: "500m"         # Maximum allowed
+```
+
+### Resource Units
+
+**CPU:**
+- `1` = 1 core
+- `1000m` = 1 core
+- `100m` = 0.1 core
+- `0.5` = 500m
+
+**Memory:**
+- `Mi` = Mebibytes (1024 * 1024 bytes)
+- `M` = Megabytes (1000 * 1000 bytes)
+- `Gi` = Gibibytes (1024^3 bytes)
+- `G` = Gigabytes (1000^3 bytes)
+
+### Quality of Service (QoS) Classes
+
+**Guaranteed** (Highest Priority)
+```yaml
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "500m"
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+# Requests == Limits
+```
+
+**Burstable** (Medium Priority)
+```yaml
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "250m"
+  limits:
+    memory: "128Mi"
+    cpu: "500m"
+# Requests < Limits
+```
+
+**BestEffort** (Lowest Priority)
+```yaml
+# No requests or limits specified
+# Pod uses available resources
+```
+
+### Eviction Policies
+
+**Soft Eviction:** Graceful termination (respects terminationGracePeriodSeconds)
+
+**Hard Eviction:** Forceful termination (no grace period)
+
+When node resources are low, eviction order:
+1. BestEffort pods
+2. Burstable pods exceeding requests
+3. Guaranteed pods (only if node is critical)
+
+### Priority Classes
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000
+globalDefault: false
+description: "Critical workloads only"
+preemptionPolicy: PreemptLowerPriority
+```
+
+Using PriorityClass in Pod:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: critical-app
+spec:
+  priorityClassName: high-priority
+  containers:
+  - name: app
+    image: myapp:1.0
+```
+
+### Interview Questions
+
+**Q: What happens when a pod exceeds its memory limit?**
+A: The container is OOMKilled (Out of Memory Killed). The pod restarts (if RestartPolicy allows).
+
+**Q: What happens when a pod exceeds its CPU limit?**
+A: The CPU is throttled. The container's processes slow down but don't crash.
+
+**Q: How do you set memory/CPU requests correctly?**
+A: Use monitoring tools to understand actual usage:
+1. Deploy with high limits initially
+2. Monitor with `kubectl top pods`
+3. Analyze metrics from Prometheus/Datadog
+4. Set requests to ~80% of observed usage
+5. Set limits to ~150% of peak usage
+
+---
+
+## Service Accounts & RBAC
+
+### Service Accounts
+
+**Purpose:** Provide identity to processes running in pods for Kubernetes API access.
+
+#### Creating Service Accounts
+
+**Using kubectl:**
+```bash
+kubectl create serviceaccount my-sa
+kubectl create serviceaccount my-sa -n production
+```
+
+**Using YAML:**
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-sa
+  namespace: default
+automountServiceAccountToken: true  # Auto-mount token (default: true)
+```
+
+#### Using Service Accounts in Pods
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  serviceAccountName: app-sa
+  containers:
+  - name: app
+    image: myapp:1.0
+    volumeMounts:
+    - name: token
+      mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      readOnly: true
+  
+  volumes:
+  - name: token
+    projected:
+      sources:
+      - serviceAccountToken:
+          audience: api
+          expirationSeconds: 3600
+          path: token
+```
+
+### RBAC Components
+
+#### Role (Namespace-scoped)
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "update", "patch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["my-secret"]  # Access only specific resource
+```
+
+#### ClusterRole (Cluster-wide)
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: admin-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+```
+
+#### RoleBinding (Connect Role to User/Group/SA)
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
+subjects:
+- kind: ServiceAccount
+  name: app-sa
+  namespace: default
+- kind: User
+  name: john@example.com
+- kind: Group
+  name: developers
+```
+
+#### ClusterRoleBinding
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-sa
+  namespace: kube-system
+```
+
+### Common RBAC Patterns
+
+**Pattern 1: Read-only Pod Metrics**
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-metrics-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+```
+
+**Pattern 2: CI/CD Pipeline Deployment**
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployer
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "update", "patch"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+```
+
+**Pattern 3: Full Namespace Admin**
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+```
+
+### Checking Permissions
+
+```bash
+# Check what a service account can do
+kubectl auth can-i create pods --as=system:serviceaccount:default:app-sa
+
+# Check all permissions for a user
+kubectl auth can-i --list --as=system:serviceaccount:default:app-sa
+
+# Debug RBAC
+kubectl auth can-i create pods --as=user@example.com -v=10
+```
+
+### Interview Questions
+
+**Q: What's the difference between a Role and a ClusterRole?**
+A:
+- **Role:** Namespace-scoped. Permissions apply only within that namespace.
+- **ClusterRole:** Cluster-wide. Permissions apply across all namespaces.
+
+**Q: Can a pod access the Kubernetes API without a service account token?**
+A: No. Every pod has a service account (default if not specified). The token is automatically mounted at `/var/run/secrets/kubernetes.io/serviceaccount/token`. Without proper RBAC permissions, API calls will be denied.
+
+---
+
+## Pod Scheduling & Placement
+
+### Scheduling Overview
+
+**Kubernetes Scheduler Process:**
+1. **Filter:** Find feasible nodes (resource availability, node selectors, taints/tolerations)
+2. **Score:** Rank feasible nodes (prefer nodes with more available resources, anti-affinity, etc.)
+3. **Bind:** Assign pod to highest-scoring node
+
+### Node Selectors (Simple Scheduling)
+
+**Label nodes:**
+```bash
+kubectl label nodes node1 disktype=ssd environment=production
+
+# View node labels
+kubectl get nodes --show-labels
+```
+
+**Use in pod spec:**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  nodeSelector:
+    disktype: ssd
+    environment: production
+  containers:
+  - name: nginx
+    image: nginx:1.21
+```
+
+**Limitations:** Only supports equality selectors (AND logic).
+
+### Node Affinity (Advanced Scheduling)
+
+**Purpose:** More flexible node scheduling with required/preferred rules.
+
+#### RequiredDuringSchedulingIgnoredDuringExecution (Hard Constraint)
+
+Pod MUST be scheduled on a matching node or remain Pending.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-required-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+            - nvme
+          - key: instance-type
+            operator: NotIn
+            values:
+            - spot
+          - key: gpu
+            operator: Exists
+          - key: deprecated
+            operator: DoesNotExist
+  containers:
+  - name: app
+    image: myapp:1.0
+```
+
+#### PreferredDuringSchedulingIgnoredDuringExecution (Soft Constraint)
+
+Scheduler PREFERS matching nodes but will schedule elsewhere if needed.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-preferred-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100  # Higher weight = stronger preference
+        preference:
+          matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+      - weight: 50   # Lower priority
+        preference:
+          matchExpressions:
+          - key: instance-type
+            operator: In
+            values:
+            - on-demand
+  containers:
+  - name: app
+    image: myapp:1.0
+```
+
+#### Combined Required + Preferred
+
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: zone
+          operator: In
+          values:
+          - us-east-1a
+          - us-east-1b
+    
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: disktype
+          operator: In
+          values:
+          - ssd
+```
+
+### Pod Affinity & Anti-Affinity
+
+**Pod Affinity:** Schedule pods CLOSE to other pods.
+**Pod Anti-Affinity:** Schedule pods FAR from other pods.
+
+#### Pod Affinity Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-frontend
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - database
+        topologyKey: kubernetes.io/hostname  # Same node
+  containers:
+  - name: frontend
+    image: frontend:1.0
+```
+
+**This pod will be scheduled on the SAME node as pods labeled `app=database`.**
+
+#### Pod Anti-Affinity Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-frontend-1
+spec:
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - web-frontend
+        topologyKey: kubernetes.io/hostname  # Different nodes
+  containers:
+  - name: frontend
+    image: frontend:1.0
+```
+
+**This ensures multiple frontend pods run on different nodes (high availability).**
+
+#### Anti-Affinity with Topology (Zone-wide)
+
+```yaml
+podAntiAffinity:
+  preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - database
+      topologyKey: topology.kubernetes.io/zone  # Different zones
+```
+
+**Spreads replicas across different availability zones.**
+
+### Taints and Tolerations
+
+**Taints:** Applied to nodes to repel pods.
+**Tolerations:** Applied to pods to allow scheduling on tainted nodes.
+
+#### Adding Taints
+
+```bash
+# NoSchedule: Don't schedule new pods (existing pods allowed)
+kubectl taint nodes node1 dedicated=gpu:NoSchedule
+
+# PreferNoSchedule: Prefer not to schedule (soft constraint)
+kubectl taint nodes node1 dedicated=gpu:PreferNoSchedule
+
+# NoExecute: Don't schedule AND evict existing pods (unless tolerate)
+kubectl taint nodes node1 dedicated=gpu:NoExecute
+
+# Remove taint
+kubectl taint nodes node1 dedicated=gpu:NoSchedule-
+```
+
+#### Adding Tolerations
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-app
+spec:
+  tolerations:
+  - key: dedicated
+    operator: Equal
+    value: gpu
+    effect: NoSchedule
+  
+  containers:
+  - name: gpu-app
+    image: gpu-app:1.0
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+```
+
+#### Toleration Operators
+
+| Operator | Meaning |
+|----------|---------|
+| `Equal` | Taint value must match toleration value |
+| `Exists` | Key must exist (value ignored) |
+| `Empty key + Exists` | Tolerates all taints |
+
+#### Common Use Cases
+
+**GPU Nodes:**
+```bash
+kubectl taint nodes gpu-node1 gpu=true:NoSchedule
+```
+
+```yaml
+tolerations:
+- key: gpu
+  operator: Equal
+  value: "true"
+  effect: NoSchedule
+```
+
+**Master/Control-plane Nodes:**
+```bash
+# Already tainted by default
+kubectl taint nodes master-node node-role.kubernetes.io/master:NoSchedule
+```
+
+```yaml
+tolerations:
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
+```
+
+**Node Maintenance:**
+```bash
+kubectl taint nodes node1 maintenance=true:NoExecute --overwrite
+```
+
+### Comparison: Node Selectors vs Affinity vs Taints
+
+| Feature | Node Selector | Node Affinity | Pod Affinity | Taints/Tolerations |
+|---------|---------------|---------------|--------------|-------------------|
+| Syntax | Simple | Complex | Complex | Moderate |
+| Flexibility | Low | High | High | High |
+| Required/Preferred | Only equality | Both | Both | Fixed |
+| Use Case | Basic filtering | Advanced filtering | Pod co-location | Node-level blocking |
+| Topology Aware | No | Operator choice | Yes | Yes |
+
+### Interview Questions
+
+**Q: Why use affinity instead of node selectors?**
+A: Affinity provides:
+- Required vs Preferred rules
+- Complex matching (In, NotIn, Exists, DoesNotExist)
+- Set-based expressions
+- Topology awareness (zones, regions)
+- Pod affinity/anti-affinity
+
+**Q: When should you use Pod Anti-Affinity?**
+A: For high availability:
+- Spread replicas across nodes/zones
+- Ensure fault tolerance
+- Prevent multiple replicas on single node
+- Cost: Can make scheduling harder with many replicas
+
+**Q: What's the difference between NoSchedule and NoExecute taints?**
+A:
+- **NoSchedule:** Only prevents new pods. Existing pods allowed.
+- **NoExecute:** Prevents new pods AND evicts existing pods (unless tolerated).
+
+---
+
+## Probes & Health Checks
+
+### Why Probes Are Important
+
+**Problem:** Container running ≠ Application healthy
+- Memory leaks causing hangs
+- Deadlocks
+- Infinite loops
+- Database connection loss
+
+**Solution:** Probes check actual application health.
+
+### Types of Probes
+
+#### 1. Liveness Probe
+
+**Purpose:** Is the container still running?
+
+**Actions if failed:**
+- Restart the container
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-liveness
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    ports:
+    - containerPort: 8080
+    
+    livenessProbe:
+      httpGet:
+        path: /health/live
+        port: 8080
+        scheme: HTTP
+      initialDelaySeconds: 10   # Wait before first check
+      periodSeconds: 10         # Check every 10s
+      timeoutSeconds: 2         # Timeout after 2s
+      failureThreshold: 3       # Restart after 3 failures
+      successThreshold: 1       # (Not used for liveness)
+```
+
+**Example: Liveness Probe Failure Sequence**
+```
+Probe 1: FAIL (1/3)
+Probe 2: FAIL (2/3)
+Probe 3: FAIL (3/3) → Container RESTART
+```
+
+#### 2. Readiness Probe
+
+**Purpose:** Is the container ready to serve traffic?
+
+**Actions if failed:**
+- Remove pod from Service endpoints
+- Stop sending traffic (but don't restart)
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-readiness
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    ports:
+    - containerPort: 8080
+    
+    readinessProbe:
+      httpGet:
+        path: /health/ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+      successThreshold: 1
+```
+
+**Scenario:**
+- Pod's database connection fails
+- Readiness probe fails
+- Service routes traffic away
+- Container keeps running
+- Health system can attempt recovery
+- Once database is back, readiness succeeds
+- Service routes traffic back
+
+#### 3. Startup Probe
+
+**Purpose:** Has the container finished starting?
+
+**Use Case:** Slow-starting applications (Java, databases)
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-with-startup
+spec:
+  containers:
+  - name: mysql
+    image: mysql:8.0
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: mysql-secret
+          key: password
+    
+    startupProbe:
+      exec:
+        command:
+        - mysql
+        - -uroot
+        - -p$(MYSQL_ROOT_PASSWORD)
+        - -e
+        - SELECT 1;
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 30        # Allow up to 300s (30 * 10s)
+      successThreshold: 1
+    
+    # Liveness and readiness ONLY checked AFTER startup succeeds
+    livenessProbe:
+      exec:
+        command:
+        - mysql
+        - -uroot
+        - -p$(MYSQL_ROOT_PASSWORD)
+        - -e
+        - SELECT 1;
+      periodSeconds: 10
+      failureThreshold: 3
+    
+    readinessProbe:
+      exec:
+        command:
+        - mysql
+        - -uroot
+        - -p$(MYSQL_ROOT_PASSWORD)
+        - -e
+        - SELECT 1;
+      periodSeconds: 5
+      failureThreshold: 3
+```
+
+### Probe Implementation Methods
+
+#### 1. HTTP GET
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+    httpHeaders:
+    - name: X-Custom-Header
+      value: awesome
+    scheme: HTTP  # or HTTPS
+```
+
+Best for: HTTP/REST APIs
+
+#### 2. TCP Socket
+
+```yaml
+livenessProbe:
+  tcpSocket:
+    port: 5432
+```
+
+Best for: Databases, other services where port availability indicates health
+
+#### 3. Exec (Command)
+
+```yaml
+readinessProbe:
+  exec:
+    command:
+    - /bin/sh
+    - -c
+    - curl http://localhost:8080/ready
+  initialDelaySeconds: 5
+```
+
+Best for: Complex health checks, custom scripts
+
+#### 4. gRPC (Kubernetes 1.24+)
+
+```yaml
+livenessProbe:
+  grpc:
+    port: 5000
+    service: myapp.v1.MyService
+```
+
+### Real-World Probe Examples
+
+**Web Application (Node.js)**
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 2
+```
+
+**Database (PostgreSQL)**
+```yaml
+livenessProbe:
+  exec:
+    command:
+    - /bin/sh
+    - -c
+    - pg_isready -U postgres
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+readinessProbe:
+  exec:
+    command:
+    - /bin/sh
+    - -c
+    - pg_isready -U postgres && psql -U postgres -d mydb -c 'SELECT 1;'
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 5
+```
+
+**Microservice with gRPC**
+```yaml
+livenessProbe:
+  grpc:
+    port: 50051
+    service: grpc.health.v1.Health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  grpc:
+    port: 50051
+    service: grpc.health.v1.Health
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+### Probe Configuration Best Practices
+
+| Parameter | Recommendation | Rationale |
+|-----------|-----------------|-----------|
+| `initialDelaySeconds` | Application start time | Wait for app to initialize |
+| `periodSeconds` | 10-30s for liveness | Balance responsiveness vs load |
+| `timeoutSeconds` | 2-5s | Quick timeout for faster recovery |
+| `failureThreshold` | 3 for liveness, 2 for readiness | Number of retries before action |
+| `successThreshold` | 1 (always) | Pod ready after first success |
+
+### Interview Questions
+
+**Q: What's the difference between liveness and readiness probes?**
+A:
+- **Liveness:** Detects if container is ALIVE. Failure causes RESTART.
+- **Readiness:** Detects if container is READY. Failure removes from Service endpoints.
+
+**Q: Why would a pod fail readiness but pass liveness?**
+A: Pod is running but not ready to serve traffic. Examples:
+- Connecting to database (connection pool warming up)
+- Loading configuration files
+- Running migrations
+- Dependency service not available
+
+**Q: How do you handle database migration during pod startup?**
+A: Use startup probe with long timeout + readiness probe:
+```yaml
+startupProbe:
+  exec:
+    command: ["/migrate.sh"]
+  failureThreshold: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health
+  initialDelaySeconds: 5
+```
+
+---
+
+## Deployment Strategies
+
+### 1. Rolling Update (Default)
+
+**How it works:**
+- Gradually replace old pods with new ones
+- Maintains service availability
+- Configurable update pace with `maxSurge` and `maxUnavailable`
+
+**YAML:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: myapp:v2
+```
+
+**Timeline:**
+```
+v1.0 [Pod1] [Pod2] [Pod3]           (Initial: v1.0)
+
+Step 1: Create v2 pod (maxSurge=1)
+[Pod1-v1] [Pod2-v1] [Pod3-v1] [Pod4-v2]  (4 total)
+
+Step 2: Delete v1 pod
+[Pod2-v1] [Pod3-v1] [Pod4-v2]           (3 total)
+
+Step 3: Create v2 pod
+[Pod2-v1] [Pod3-v1] [Pod4-v2] [Pod5-v2]  (4 total)
+
+Step 4: Delete v1 pod
+[Pod3-v1] [Pod4-v2] [Pod5-v2]           (3 total)
+
+Step 5: Create v2 pod
+[Pod3-v1] [Pod4-v2] [Pod5-v2] [Pod6-v2]  (4 total)
+
+Step 6: Delete last v1 pod
+[Pod4-v2] [Pod5-v2] [Pod6-v2]           (3 total, all v2.0)
+```
+
+**Pros:**
+- Simple, default strategy
+- No extra infrastructure needed
+- Automatic rollback support
+- Version history maintained
+
+**Cons:**
+- Mixed versions running simultaneously (potential compatibility issues)
+- Harder to test new version
+
+### 2. Blue-Green Deployment
+
+**How it works:**
+- Two identical production environments (Blue = current, Green = new)
+- Deploy to inactive environment
+- Switch traffic after validation
+- Quick rollback possible
+
+**Setup:**
+
+```bash
+# Create ConfigMaps for each version
+kubectl create configmap nginx-blue --from-literal=index.html='<h1>Blue v1.0</h1>'
+kubectl create configmap nginx-green --from-literal=index.html='<h1>Green v2.0</h1>'
+```
+
+**Blue Deployment:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: blue
+    spec:
+      containers:
+      - name: app
+        image: myapp:v1.0
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-blue
+```
+
+**Green Deployment:**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      version: green
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: green
+    spec:
+      containers:
+      - name: app
+        image: myapp:v2.0
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-green
+```
+
+**Service (initially points to Blue):**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+    version: blue  # Initially blue
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+**Switch to Green:**
+```bash
+# After validation, patch service to point to green
+kubectl patch service myapp-service -p '{"spec":{"selector":{"version":"green"}}}'
+
+# If issues arise, switch back instantly
+kubectl patch service myapp-service -p '{"spec":{"selector":{"version":"blue"}}}'
+
+# Delete blue after green is stable
+kubectl delete deployment my-app-blue
+```
+
+**Pros:**
+- Zero-downtime deployment
+- Instant rollback
+- Full production validation before switch
+- No mixed versions
+
+**Cons:**
+- Double resource consumption during deployment
+- Need two environments
+- Complex to manage
+
+### 3. Canary Deployment
+
+**How it works:**
+- Deploy new version to small subset of traffic (5-10%)
+- Monitor metrics
+- Gradually increase traffic as confidence grows
+- Rollback if issues detected
+
+**Setup:**
+
+**Stable Deployment (90% traffic):**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-stable
+spec:
+  replicas: 9  # 90% of traffic
+  selector:
+    matchLabels:
+      app: myapp
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: myapp
+        track: stable
+    spec:
+      containers:
+      - name: app
+        image: myapp:v1.0
+```
+
+**Canary Deployment (10% traffic):**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-canary
+spec:
+  replicas: 1  # 10% of traffic
+  selector:
+    matchLabels:
+      app: myapp
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: myapp
+        track: canary
+    spec:
+      containers:
+      - name: app
+        image: myapp:v2.0
+```
+
+**Service (routes to both):**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp  # Routes to BOTH stable and canary
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+**Gradually Increase Canary Traffic:**
+```bash
+# Phase 1: 10% canary
+kubectl scale deployment app-stable --replicas=9
+kubectl scale deployment app-canary --replicas=1
+
+# Phase 2: 20% canary
+kubectl scale deployment app-stable --replicas=8
+kubectl scale deployment app-canary --replicas=2
+
+# Phase 3: 50% canary
+kubectl scale deployment app-stable --replicas=5
+kubectl scale deployment app-canary --replicas=5
+
+# Phase 4: 100% canary (if all metrics good)
+kubectl scale deployment app-stable --replicas=0
+kubectl scale deployment app-canary --replicas=10
+
+# Rename canary to stable
+kubectl delete deployment app-stable
+kubectl patch deployment app-canary -p '{"metadata":{"labels":{"track":"stable"}}}'
+```
+
+**Monitoring During Canary:**
+```bash
+# Monitor error rates
+kubectl logs -l track=canary -f
+
+# Check metrics
+kubectl top pods -l track=canary
+```
+
+**Pros:**
+- Risk mitigation (only small % affected)
+- Real-world validation
+- Gradual rollout
+- Easy rollback
+
+**Cons:**
+- Complex traffic management
+- Requires monitoring/automation
+- Longer deployment time
+- Need external tools (Flagger, Istio) for automation
+
+### Deployment Strategy Comparison
+
+| Strategy | Risk | Speed | Complexity | Resources | Rollback |
+|----------|------|-------|-----------|----------|----------|
+| Rolling | Medium | Slow | Low | Same | Automatic |
+| Blue-Green | Low | Fast | Medium | 2x | Instant |
+| Canary | Very Low | Slow | High | +10-20% | Instant |
+
+### Choosing a Strategy
+
+- **Rolling Update:** Default, general-purpose. Use when quick feedback ok.
+- **Blue-Green:** Critical applications, need instant switch, have resources.
+- **Canary:** Production-critical, need risk mitigation, have monitoring tools.
+
+### Interview Question
+
+**Q: How would you implement automated canary deployment?**
+A: Use tools like:
+- **Flagger:** Automated canary analysis and promotion
+- **Istio:** Traffic splitting and monitoring
+- **ArgoCD:** GitOps-based deployment with canary support
+
+Example with Flagger:
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: myapp
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp
+  progressDeadlineSeconds: 300
+  service:
+    port: 80
+  analysis:
+    interval: 1m
+    threshold: 5
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        max: 500
+      interval: 30s
+  skipAnalysis: false
+```
+
+---
+
+## Additional Advanced Topics
+
+### Metrics Server
+
+**Purpose:** Provides metrics (CPU, memory) for horizontal pod autoscaling.
+
+**Installation:**
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Patch for insecure TLS (development only)
+kubectl patch deployment metrics-server -n kube-system \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"metrics-server","args":["--cert-dir=/tmp","--secure-port=4443","--kubelet-insecure-tls"]}]}}}}'
+```
+
+**Viewing Metrics:**
+```bash
+# Pod metrics
+kubectl top pods
+
+# Node metrics
+kubectl top nodes
+
+# Specific pod details
+kubectl top pod my-pod -n default
+```
+
+### Init Containers
+
+**Purpose:** Run initialization tasks before main container starts.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-init
+spec:
+  initContainers:
+  - name: init-db
+    image: busybox:1.28
+    command:
+    - sh
+    - -c
+    - |
+      echo "Waiting for database..."
+      until wget -q -O- http://postgres:5432; do
+        echo "Database not ready, retrying..."
+        sleep 2
+      done
+      echo "Database ready!"
+  
+  - name: init-config
+    image: alpine:3.14
+    command:
+    - sh
+    - -c
+    - apk add --no-cache curl && curl http://config-server/config > /shared-data/config.json
+    volumeMounts:
+    - name: shared-data
+      mountPath: /shared-data
+  
+  containers:
+  - name: app
+    image: myapp:1.0
+    volumeMounts:
+    - name: shared-data
+      mountPath: /etc/config
+  
+  volumes:
+  - name: shared-data
+    emptyDir: {}
+```
+
+**Execution:**
+```
+Init Container 1 (init-db) runs → completes
+        ↓
+Init Container 2 (init-config) runs → completes
+        ↓
+Main Container (app) starts
+```
+
+---
+
+## Interview Tips
+
+### Common Interview Questions & Strong Answers
+
+**Q: Design a highly available application deployment**
+
+A: Here's my approach:
+1. **Use Deployments** with multiple replicas (≥3 for production)
+2. **Set proper resource requests/limits** for scheduling
+3. **Implement readiness/liveness probes** for health checking
+4. **Use rolling updates** with appropriate maxSurge/maxUnavailable
+5. **Pod disruption budgets** for safe maintenance:
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: myapp
+```
+6. **Network policies** to control traffic
+7. **Vertical pod autoscaling** for right-sizing
+8. **Monitoring and alerting** with Prometheus
+
+**Q: How would you debug a pod stuck in pending state?**
+
+A: Follow this checklist:
+```bash
+# 1. Describe the pod
+kubectl describe pod my-pod
+
+# Check "Events" section for blocking reasons:
+# - Insufficient resources
+# - Node selectors not matching
+# - Affinity/anti-affinity failures
+# - Taints without tolerations
+
+# 2. Check node status
+kubectl get nodes
+kubectl describe node node-name
+
+# 3. Check resource availability
+kubectl top nodes
+kubectl describe nodes --all
+
+# 4. Check for pending scheduler
+kubectl get events -n default --sort-by='.lastTimestamp'
+
+# 5. Check scheduler logs
+kubectl logs -n kube-system -l component=kube-scheduler
+```
+
+---
+
+## Final Summary Table
+
+| Topic | Purpose | When to Use |
+|-------|---------|------------|
+| Multi-Container Pods | Sidecar, ambassador, adapter patterns | Supporting services needed |
+| ReplicaSet | Manage pod replicas | Used by Deployments (rarely direct) |
+| Deployment | Application lifecycle management | Every application |
+| DaemonSet | Run pod on every node | System services, logging, monitoring |
+| ConfigMap | Store non-sensitive config | All configuration data |
+| Secret | Store sensitive data | Passwords, tokens, certificates |
+| Service Account | Pod identity for API access | Pods needing Kubernetes API |
+| Resource Requests/Limits | Guarantee/cap resources | All production pods |
+| Node Affinity | Control node placement | Pin pods to specific nodes |
+| Taints/Tolerations | Prevent pod scheduling | Dedicated nodes (GPU, memory) |
+| Probes | Health checking | All production applications |
+| Rolling Update | Gradual deployment | Standard deployments |
+| Blue-Green | Zero-downtime switch | Critical applications |
+| Canary | Risk mitigation | Production-critical systems |
+
+---
+
+**Last Updated:** 2024
+**Kubernetes Version:** 1.24+
+**Difficulty Level:** Advanced (CKAD/CKA Interview Ready)
