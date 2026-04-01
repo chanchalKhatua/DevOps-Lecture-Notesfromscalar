@@ -52,12 +52,13 @@ Both containers share:
 5. **Configuration / Sync**
    - Fetch configs, secrets, or data
 
-##### **Flow**     
+##### **Flow**
+```
 Step 1: App writes logs → /var/log/myapp
 Step 2: Shared volume (emptyDir) stores logs
 Step 3: Sidecar reads logs from same volume
 Step 4: Sidecar sends logs to external system
-
+```
 ```yaml
 apiVersion: v1
 kind: Pod
