@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-denied
+  namespace: np-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox-denied
+  template:
+    metadata:
+      labels:
+        app: busybox-denied
+    spec:
+      containers:
+      - name: denied
+        image: busybox
+        command: [ "/bin/sh", "-c", "sleep 3600" ]

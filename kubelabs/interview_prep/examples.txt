@@ -1,0 +1,54 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+    name: nginx
+    namespace: default
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: nginx
+    template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+            containers:
+            - name: nginx
+              image: nginx:latest
+              resources:
+              requests:
+                  cpu: "200m"
+                  memory: "256Mi"
+              limits:
+                  cpu: "400m"
+                  memory: "512Mi"
+
+---
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+    name: nginx
+    app: dev
+spec:
+    containers:
+    - name: nginx
+      image: nginx
+      resources:
+          requests:
+              cpu: "120m"
+              memory: "256Mi"
+          limits:
+              cpu: "250m"
+              memory: "512Mi"
+       liveness:
+           httpGet:
+             path: /
+             port: 80
+           initialDelaySeconds: 60
+       readiness:
+           httpGet:
+             path: /
+             port: 80

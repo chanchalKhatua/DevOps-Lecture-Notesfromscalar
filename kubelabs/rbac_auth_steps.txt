@@ -1,0 +1,51 @@
+Generate the key:
+openssl genrsa -out dev-user.key 2048
+
+2. create the signing request.
+openssl req -new -key dev-user.key -out dev-user.csr -subj "/CN=dev-user/O=dev-group"
+
+3. cat dev-user.csr
+-----BEGIN CERTIFICATE REQUEST-----
+MIICbDCCAVQCAQAwJzERMA8GA1UEAwwIZGV2LXVzZXIxEjAQBgNVBAoMCWRldi1n
+cm91cDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMTMcVf1LBLe01Cn
+3CYkqlrGPB4ciaWK5yYc+Ng8Gzx3MBiLuNfIJXhcsPL0Xnd1W2AzaSChX6vMPPkB
+1Z42choLPuqmjaj3I+wO8vGGYsgdUttvkfWbbMVPE6M8zrCzaZPcUBj/e0XXSow3
+0PICHVfNvd9mfFnPKSa6Dvrp7VbXVDBjJUPXckOhSACpMGB/B7ByfbIoe6oPYnkb
+TQIR987Ym81zY7x1aIVAvG9bP9C7uhrSSpIAEgxtrcTcj4mtTNLECVK4VGQp1Cs1
+C617BY1MyGZj5RCkshDOoiT+9KC5ldZqna3RkUOhDwhlEG2v/3UTd6mbGP3EVEoN
+q8K3ZDECAwEAAaAAMA0GCSqGSIb3DQEBCwUAA4IBAQAbjqoDA0+p3nuHYbS/eiOb
+0pZ50GzqbL1hueX6qkdSBTQ/o5a0/YArZvA51e3pKMGJR0UAAKA98LPmyPxZEuVV
+uYKUnIJzRkLmAFuEOvXA5rSYqq+QiSjETLJtMuP9iOXMaOuyF/c9FVQOXt2TvZDR
+SCCekPfG6sFrr1dg3HwgdLMMlhbxGg1eqC16gG5JUcCpCHcntNci6QtxFxbuKOei
+w1hp0PuKSRwXgSbQEn8ZaoAHIFr7m1IVuBszleMZFsO+tZOMBb0Yo3n+8OSm2CGc
+994pR/O7V0qTGO5ejhBGa/OL0ElGtxU8cpkIjbY5iuDpQ7/pSRF1aWtaqyU0ysy5
+-----END CERTIFICATE REQUEST-----
+
+CSR_CONTENT=$(cat dev-user.csr | base64 | tr -d '\n')
+
+kubectl certificate approve dev-user.csr
+
+4. create certificatesigning_request.yaml --> 
+(copy from github repo)
+
+4a.
+get the csr approved : kubectl certificate approve <csr-request-name>
+
+4b. Get the certificate:
+kubectl get csr dev-user-csr -o jsonpath='{.status.certificate}' | base64 --decode > dev-user.crt
+
+4c. Update the kubeconfig for user dev-user
+kubectl config set-credentials dev-user --client-certificate=dev-user.crt --client-key=dev-user.key
+
+
+
+6. Define the clusterrole and apply it 
+
+7. Create the clusterroleBinding and apply it for the user dev-user
+
+8. 
+sudo kubectl config set-credentials dev-user --client-certificate=dev-user.crt --client-key=dev-user.key
+
+sudo kubectl config set-context dev-user-context --cluster=default --user=dev-user
+
+sudo kubectl config use-context dev-user-context

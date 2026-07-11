@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nautilus
+spec:
+  type: NodePort
+  selector:
+    run: pod-nautilus
+    app: nautilus
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30008

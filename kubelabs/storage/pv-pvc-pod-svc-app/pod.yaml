@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: pod-nautilus
+    app: nautilus
+  name: pod-nautilus
+spec:
+  volumes:
+  - name: nautilus-pv-storage
+    persistentVolumeClaim:
+      claimName: pvc-nautilus
+  containers:
+  - image: nginx:latest
+    name: container-nautilus
+    resources: {}
+    volumeMounts:
+    - mountPath: "/usr/share/nginx/html"
+      name: nautilus-pv-storage
+    ports:
+    - containerPort: 80
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}

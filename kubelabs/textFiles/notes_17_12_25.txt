@@ -1,0 +1,54 @@
+kubectl create secret generic mysql-user-pass \
+  --from-literal=username=kodekloud_top \
+  --from-literal=password=Rc5C9EyvbU
+
+
+name: username
+value: kodekloud_cap
+
+name: password
+value: dCV3szSGNA
+
+---
+mysql-db-url
+
+
+name: database
+value: kodekloud_db1
+
+
+kubectl create secret generic mysql-db-url \
+  --from-literal=database=kodekloud_db2 
+
+---
+mysql-host
+
+name: 
+value: mysql-service
+
+kubectl create secret generic mysql-host \
+  --from-literal=host=mysql-service
+
+
+mysql-root-pass
+
+name: password
+value: R00t
+
+
+kubectl create secret generic mysql-root-pass \
+  --from-literal=password=R00t
+---
+php.ini with variables_order = "EGPCS"
+
+kubectl create configmap php-config --from-literal=php.ini='variables_order = "EGPCS"'
+
+kubectl create service nodeport lemp-service --tcp=port:30008 --dry-run=client
+
+kubectl cp <file-spec-src> <file-spec-dest>
+
+lemp-wp-7d646957b8-slvb2
+
+k cp index.php lemp-wp-7d646957b8-slvb2:/app -c nginx-php-container
+
+kubectl exec -it lemp-wp-7d646957b8-slvb2 -c nginx-php-container -- /bin/bash

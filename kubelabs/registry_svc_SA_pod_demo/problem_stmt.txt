@@ -1,0 +1,9 @@
+In kubernetes kind cluster, Perform below steps:
+
+1. Setup a docker private registry.
+2. Create a service account.
+3. Use the service account in pod.
+4. Create a custom nginx image and upload to private registry.
+5. Pull custom image to registry.
+
+docker build -t registry-service.registry.svc.cluster.local:32000/custom-nginx:latest .

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-allowed
+  namespace: network-policy-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox-allowed
+  template:
+    metadata:
+      labels:
+        app: busybox-allowed
+    spec:
+      containers:
+      - name: allowed
+        image: busybox
+        command: [ "/bin/sh", "-c", "sleep 3600" ]

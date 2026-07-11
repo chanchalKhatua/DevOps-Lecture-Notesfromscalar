@@ -1,0 +1,28 @@
+# Shared Volume Between Containers
+# Two containers sharing an emptyDir volume
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: volume-share-devops
+  name: volume-share-devops
+spec:
+  volumes:
+  - name: volume-share
+    emptyDir: {}
+  containers:
+  - image: debian:latest
+    name: volume-container-devops-1
+    command: [ 'sh', '-c', 'sleep 3600' ]
+    volumeMounts:
+    - name: volume-share
+      mountPath: /tmp/beta
+  - image: debian:latest
+    name: volume-container-devops-2
+    command: [ 'sh', '-c', 'sleep 3600' ]
+    volumeMounts:
+    - name: volume-share
+      mountPath: /tmp/cluster
+  restartPolicy: Never
+  dnsPolicy: ClusterFirst

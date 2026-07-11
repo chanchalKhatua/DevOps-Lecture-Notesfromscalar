@@ -1,0 +1,24 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+  namespace: api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1000"
+
+# HPA to scale the api-deployment in api namespace based on custom metric 'requests_per_second' with min 1 and max 20 replicas
+
+# Pay attention to spec.metrics sectionm, there instead of resource type metric, we are using Pods type metric to define custom metric.

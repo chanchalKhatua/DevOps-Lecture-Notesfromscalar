@@ -1,0 +1,12 @@
+cat >> ~/.bashrc << 'EOF'
+alias k='kubectl'
+alias kgp='kubectl get pods'
+alias kgs='kubectl get svc'
+alias kd='kubectl describe'
+alias kgn='kubectl get ns'
+export do='--dry-run=client -o yaml'
+export now='--force --grace-period=0'
+export go='get -oyaml'
+EOF
+source ~/.bashrc
+# Set up aliases

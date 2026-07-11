@@ -1,0 +1,14 @@
+# Static Pod Example
+# Place this file in /etc/kubernetes/manifests/ on the node
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-busybox
+  labels:
+    role: static-busybox
+spec:
+  containers:
+  - name: static-busybox
+    image: busybox
+    command: [ "sleep", "1000" ]

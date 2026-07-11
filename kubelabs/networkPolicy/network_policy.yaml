@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: my-np
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      name: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          name: frontend
+    ports:
+      - protocol: TCP
+        port: 80

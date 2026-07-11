@@ -1,0 +1,21 @@
+# Pod with Tolerations Example
+# This pod can be scheduled on nodes with specific taints
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toleration-example
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+  tolerations:
+  # Toleration for NoSchedule effect
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
+  # Toleration using Exists operator
+  - key: "key1"
+    operator: "Exists"
+    effect: "NoSchedule"

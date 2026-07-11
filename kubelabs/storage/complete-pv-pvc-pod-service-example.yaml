@@ -1,0 +1,70 @@
+# Complete PV, PVC, Pod, and Service Example
+# This example shows how to use PersistentVolume with a Pod and expose it via Service
+---
+# PersistentVolume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nautilus
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 4Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nautilus
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+# Pod using the PVC
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod-nautilus
+    app: nautilus
+  name: pod-nautilus
+spec:
+  volumes:
+  - name: nautilus-pv-storage
+    persistentVolumeClaim:
+      claimName: pvc-nautilus
+  containers:
+  - image: nginx:latest
+    name: container-nautilus
+    volumeMounts:
+    - mountPath: "/usr/share/nginx/html"
+      name: nautilus-pv-storage
+    ports:
+    - containerPort: 80
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+---
+# Service to expose the Pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nautilus
+spec:
+  type: NodePort
+  selector:
+    run: pod-nautilus
+    app: nautilus
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30008
