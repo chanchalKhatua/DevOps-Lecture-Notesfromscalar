@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${project_name} - ${environment}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 ${project_name}</h1>
+            <p class="environment">Environment: ${environment}</p>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h2>Welcome to Our Web Application</h2>
+                <p>This is a production-ready web application deployed using Terraform on AWS.</p>
+            </section>
+            
+            <section class="features">
+                <h3>Architecture Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🌐 High Availability</h4>
+                        <p>Multi-AZ deployment with Auto Scaling</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔒 Security</h4>
+                        <p>WAF, Security Groups, and IAM roles</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 Monitoring</h4>
+                        <p>CloudWatch metrics and alarms</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🚀 Performance</h4>
+                        <p>CloudFront CDN and optimized caching</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="api-demo">
+                <h3>API Demo</h3>
+                <button onclick="testAPI()">Test API Connection</button>
+                <div id="api-result"></div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 ${project_name} - Deployed with Terraform</p>
+        </footer>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = 'Testing API...';
+            
+            try {
+                const response = await fetch('/api/users');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h4>API Response:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">API Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Display current timestamp
+        document.addEventListener('DOMContentLoaded', function() {
+            const timestamp = new Date().toLocaleString();
+            document.querySelector('.environment').innerHTML += `<br>Loaded at: ${timestamp}`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Development Environment Variables
+# Copy this file to terraform.tfvars and update the values
+
+aws_region    = "us-west-2"
+key_pair_name = "your-ec2-key-pair-name"
+
+# Note: Make sure you have created an EC2 key pair in your AWS account
+# You can create one using: aws ec2 create-key-pair --key-name your-key-name --query 'KeyMaterial' --output text > your-key-name.pem
