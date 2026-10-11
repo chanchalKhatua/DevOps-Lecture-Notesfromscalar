@@ -1,0 +1,7 @@
+Region = "ap-south-1"
+ProjectName = "Pramod"
+Environment = "Test"
+CriticalTopicName = "Critical"
+CriticalAlertEmailId = "pramod.kr@axcess.io"
+WarningAlertEmailId = "pramod.kr@axcess.io"
+WarningTopicName = "Warning"
